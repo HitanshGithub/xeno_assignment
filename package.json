@@ -12,7 +12,7 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently -n web,channel -c cyan,magenta \"npm run dev -w @cadence/web\" \"npm run dev -w @cadence/channel-sim\"",
+    "dev": "node scripts/dev.mjs",
     "dev:web": "npm run dev -w @cadence/web",
     "dev:channel": "npm run dev -w @cadence/channel-sim",
     "build": "npm run build -w @cadence/web",
@@ -26,7 +26,6 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\""
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "typescript": "^5.7.3"
