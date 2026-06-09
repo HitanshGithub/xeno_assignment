@@ -19,7 +19,6 @@
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^2.15.0",
     "server-only": "^0.0.1",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",

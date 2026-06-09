@@ -1,29 +1,101 @@
 @import 'tailwindcss';
 
-/* Cadence design tokens. The full visual system lands with the UI phase; this
-   is the base palette so server-rendered scaffolding already looks intentional. */
+/* ---------------------------------------------------------------------------
+   Cadence design system.
+   A warm, "specialty-coffee" palette — espresso-dark canvas, cream ink, a
+   caramel/amber primary and a sage accent. Deliberately not the default
+   dark-slate-plus-purple look; it belongs to Brew & Bean.
+   Fonts come from next/font as --ff-display (Fraunces, serif) and --ff-body
+   (Plus Jakarta Sans).
+--------------------------------------------------------------------------- */
 @theme {
-  --color-canvas: #0b0c0f;
-  --color-surface: #14161b;
-  --color-surface-2: #1b1e25;
-  --color-border: #262a33;
-  --color-ink: #e8eaf0;
-  --color-ink-muted: #9aa0ad;
-  --color-brand: #6d5efc;
-  --color-brand-soft: #8b7dff;
-  --color-accent: #19c37d;
-  --color-warn: #f5a623;
-  --color-danger: #ef4d4d;
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --color-canvas: #100e0c;
+  --color-surface: #1a1613;
+  --color-surface-2: #221d18;
+  --color-surface-3: #2a241d;
+  --color-border: #312b22;
+  --color-border-strong: #423a2e;
+
+  --color-ink: #f3eee4;
+  --color-ink-muted: #a99f8d;
+  --color-ink-faint: #6f685a;
+
+  --color-brand: #e0975a;
+  --color-brand-hover: #ecaa6e;
+  --color-brand-ink: #2a1a0a;
+  --color-brand-soft: #3a2a1a;
+
+  --color-accent: #6bbf94;
+  --color-accent-soft: #1f3328;
+  --color-info: #74a7d6;
+  --color-info-soft: #1f2c38;
+  --color-warn: #e6b450;
+  --color-danger: #e26a64;
+  --color-danger-soft: #38221f;
+
+  --font-sans: var(--ff-body), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--ff-display), Georgia, 'Times New Roman', serif;
+
+  --radius: 0.75rem;
 }
 
 html,
 body {
-  background: var(--color-canvas);
+  background-color: var(--color-canvas);
   color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
+/* A subtle warm radial glow behind the app, like light over a counter. */
+body {
+  background-image:
+    radial-gradient(900px 500px at 12% -10%, rgba(224, 151, 90, 0.08), transparent 70%),
+    radial-gradient(700px 500px at 100% 0%, rgba(107, 191, 148, 0.05), transparent 60%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: var(--color-brand);
+  color: var(--color-brand-ink);
+}
+
+/* Restrained scrollbars. */
 * {
-  border-color: var(--color-border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 9999px;
+}
+
+@keyframes cadence-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: cadence-fade-up 0.35s ease both;
+}
+
+@keyframes cadence-pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.animate-pulse-dot {
+  animation: cadence-pulse-dot 1.4s ease-in-out infinite;
 }
