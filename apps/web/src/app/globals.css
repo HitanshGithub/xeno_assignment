@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+/* Cadence design tokens. The full visual system lands with the UI phase; this
+   is the base palette so server-rendered scaffolding already looks intentional. */
+@theme {
+  --color-canvas: #0b0c0f;
+  --color-surface: #14161b;
+  --color-surface-2: #1b1e25;
+  --color-border: #262a33;
+  --color-ink: #e8eaf0;
+  --color-ink-muted: #9aa0ad;
+  --color-brand: #6d5efc;
+  --color-brand-soft: #8b7dff;
+  --color-accent: #19c37d;
+  --color-warn: #f5a623;
+  --color-danger: #ef4d4d;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+* {
+  border-color: var(--color-border);
+}
