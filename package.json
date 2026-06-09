@@ -1,0 +1,34 @@
+{
+  "name": "cadence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cadence — an AI-native campaign co-pilot. Describe a goal; it finds the audience, writes the message, picks the channel, and tells you what worked.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,channel -c cyan,magenta \"npm run dev -w @cadence/web\" \"npm run dev -w @cadence/channel-sim\"",
+    "dev:web": "npm run dev -w @cadence/web",
+    "dev:channel": "npm run dev -w @cadence/channel-sim",
+    "build": "npm run build -w @cadence/web",
+    "db:generate": "npm run generate -w @cadence/db",
+    "db:push": "npm run push -w @cadence/db",
+    "db:migrate": "npm run migrate -w @cadence/db",
+    "db:seed": "npm run seed -w @cadence/db",
+    "db:studio": "npm run studio -w @cadence/db",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "typescript": "^5.7.3"
+  }
+}
