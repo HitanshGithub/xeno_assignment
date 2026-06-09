@@ -1,4 +1,9 @@
-import type { Channel, CampaignStatus, CommunicationStatus, SegmentDefinition } from '@cadence/shared';
+import type {
+  Channel,
+  CampaignStatus,
+  CommunicationStatus,
+  SegmentDefinition,
+} from '@cadence/shared';
 
 /** Shapes the API returns (JSON — dates are ISO strings). Kept here so pages
  *  share one source of truth without importing the Prisma runtime client. */

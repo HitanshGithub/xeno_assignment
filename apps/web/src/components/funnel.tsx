@@ -37,16 +37,19 @@ export function Funnel({ data, channel }: { data: FunnelData; channel: Channel }
           <div className="mb-1 flex items-baseline justify-between text-sm">
             <span className="text-ink-muted">{s.label}</span>
             <span className="tabular-nums">
-              <span className="font-medium text-ink">{s.value.toLocaleString('en-IN')}</span>
+              <span className="text-ink font-medium">{s.value.toLocaleString('en-IN')}</span>
               {s.label !== 'Sent' && (
-                <span className="ml-2 text-xs text-ink-faint">{pct(s.value, s.of)} of prev</span>
+                <span className="text-ink-faint ml-2 text-xs">{pct(s.value, s.of)} of prev</span>
               )}
             </span>
           </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-surface-3">
+          <div className="bg-surface-3 h-2.5 overflow-hidden rounded-full">
             <div
               className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${Math.max((s.value / base) * 100, s.value > 0 ? 2 : 0)}%`, background: s.color }}
+              style={{
+                width: `${Math.max((s.value / base) * 100, s.value > 0 ? 2 : 0)}%`,
+                background: s.color,
+              }}
             />
           </div>
         </div>
@@ -61,12 +64,20 @@ export function Funnel({ data, channel }: { data: FunnelData; channel: Channel }
   );
 }
 
-function Mini({ label, value, tone }: { label: string; value: string; tone: 'accent' | 'danger' | 'muted' }) {
+function Mini({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'accent' | 'danger' | 'muted';
+}) {
   const color = tone === 'accent' ? 'text-accent' : tone === 'danger' ? 'text-danger' : 'text-ink';
   return (
-    <div className="rounded-lg border border-border bg-surface-2 px-3 py-2.5">
-      <div className="text-[11px] uppercase tracking-wide text-ink-faint">{label}</div>
-      <div className={`mt-0.5 font-display text-lg ${color}`}>{value}</div>
+    <div className="border-border bg-surface-2 rounded-lg border px-3 py-2.5">
+      <div className="text-ink-faint text-[11px] tracking-wide uppercase">{label}</div>
+      <div className={`font-display mt-0.5 text-lg ${color}`}>{value}</div>
     </div>
   );
 }

@@ -25,17 +25,17 @@ CRM  ◀─POST /api/receipts (HMAC-signed)──────  │  setTimeout p
 
 ## What it models on purpose
 
-| Reality | How it's simulated |
-| --- | --- |
-| Per-channel behaviour | Email reports OPENED, WhatsApp/RCS report READ, SMS neither; different delivery/click/convert rates |
-| Bursty volume | A campaign launch is one batch of up to 5,000 messages |
-| Async, delayed engagement | Each event fires on its own timer (compressed by `CHANNEL_SPEED` for demos) |
-| Out-of-order receipts | Independent timers + retry jitter mean later events can land first |
-| At-least-once delivery | `CHANNEL_DUPLICATE_RATE` re-sends some receipts (same `eventId`) |
-| Lossy network | Receipt POSTs that fail are retried with exponential backoff, then dead-lettered |
-| Idempotent sends | A replayed batch returns the original result, never re-sends |
-| Hard failures | A share of messages FAIL / BOUNCE and terminate the lifecycle |
-| Attribution source | A converting click emits CONVERTED carrying a fabricated order |
+| Reality                   | How it's simulated                                                                                  |
+| ------------------------- | --------------------------------------------------------------------------------------------------- |
+| Per-channel behaviour     | Email reports OPENED, WhatsApp/RCS report READ, SMS neither; different delivery/click/convert rates |
+| Bursty volume             | A campaign launch is one batch of up to 5,000 messages                                              |
+| Async, delayed engagement | Each event fires on its own timer (compressed by `CHANNEL_SPEED` for demos)                         |
+| Out-of-order receipts     | Independent timers + retry jitter mean later events can land first                                  |
+| At-least-once delivery    | `CHANNEL_DUPLICATE_RATE` re-sends some receipts (same `eventId`)                                    |
+| Lossy network             | Receipt POSTs that fail are retried with exponential backoff, then dead-lettered                    |
+| Idempotent sends          | A replayed batch returns the original result, never re-sends                                        |
+| Hard failures             | A share of messages FAIL / BOUNCE and terminate the lifecycle                                       |
+| Attribution source        | A converting click emits CONVERTED carrying a fabricated order                                      |
 
 ## Endpoints
 

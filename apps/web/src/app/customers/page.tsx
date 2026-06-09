@@ -44,12 +44,16 @@ export default function CustomersPage() {
     <div className="animate-fade-up">
       <PageHeader
         title="Shoppers"
-        subtitle={data ? `${data.total.toLocaleString('en-IN')} customers in the base` : 'Your customer base'}
+        subtitle={
+          data
+            ? `${data.total.toLocaleString('en-IN')} customers in the base`
+            : 'Your customer base'
+        }
       />
 
       <div className="mb-4 flex gap-2">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-faint" />
+          <Search className="text-ink-faint pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -73,7 +77,7 @@ export default function CustomersPage() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-surface-2 text-left text-xs uppercase tracking-wide text-ink-faint">
+              <tr className="border-border bg-surface-2 text-ink-faint border-b text-left text-xs tracking-wide uppercase">
                 <th className="px-4 py-2.5 font-medium">Shopper</th>
                 <th className="px-4 py-2.5 font-medium">City</th>
                 <th className="px-4 py-2.5 font-medium">Tags</th>
@@ -85,14 +89,17 @@ export default function CustomersPage() {
             </thead>
             <tbody>
               {data?.customers.map((c) => (
-                <tr key={c.id} className="border-b border-border/50 last:border-0 hover:bg-surface-2/50">
+                <tr
+                  key={c.id}
+                  className="border-border/50 hover:bg-surface-2/50 border-b last:border-0"
+                >
                   <td className="px-4 py-2.5">
                     <div className="text-ink">
                       {c.firstName} {c.lastName ?? ''}
                     </div>
-                    <div className="text-xs text-ink-faint">{c.email ?? '—'}</div>
+                    <div className="text-ink-faint text-xs">{c.email ?? '—'}</div>
                   </td>
-                  <td className="px-4 py-2.5 text-ink-muted">{c.city ?? '—'}</td>
+                  <td className="text-ink-muted px-4 py-2.5">{c.city ?? '—'}</td>
                   <td className="px-4 py-2.5">
                     <div className="flex flex-wrap gap-1">
                       {c.tags.slice(0, 3).map((t) => (
@@ -102,16 +109,20 @@ export default function CustomersPage() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-ink-muted">{c.orderCount}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-ink">
+                  <td className="text-ink-muted px-4 py-2.5 text-right tabular-nums">
+                    {c.orderCount}
+                  </td>
+                  <td className="text-ink px-4 py-2.5 text-right tabular-nums">
                     {money(c.lifetimeValueCents)}
                   </td>
-                  <td className="px-4 py-2.5 text-right text-ink-muted">{relativeTime(c.lastOrderAt)}</td>
+                  <td className="text-ink-muted px-4 py-2.5 text-right">
+                    {relativeTime(c.lastOrderAt)}
+                  </td>
                   <td className="px-4 py-2.5 text-center">
                     {c.marketingOptIn ? (
-                      <Check className="mx-auto size-4 text-accent" />
+                      <Check className="text-accent mx-auto size-4" />
                     ) : (
-                      <X className="mx-auto size-4 text-ink-faint" />
+                      <X className="text-ink-faint mx-auto size-4" />
                     )}
                   </td>
                 </tr>
@@ -122,12 +133,17 @@ export default function CustomersPage() {
       </Card>
 
       {data && data.total > TAKE && (
-        <div className="mt-4 flex items-center justify-between text-sm text-ink-muted">
+        <div className="text-ink-muted mt-4 flex items-center justify-between text-sm">
           <span>
             {skip + 1}–{Math.min(skip + TAKE, data.total)} of {data.total.toLocaleString('en-IN')}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={skip === 0} onClick={() => setSkip(Math.max(0, skip - TAKE))}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={skip === 0}
+              onClick={() => setSkip(Math.max(0, skip - TAKE))}
+            >
               Previous
             </Button>
             <Button

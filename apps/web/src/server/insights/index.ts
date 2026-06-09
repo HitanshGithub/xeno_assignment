@@ -1,6 +1,1 @@
-export {
-  campaignStats,
-  dashboardStats,
-  type CampaignFunnel,
-  type DashboardStats,
-} from './stats';
+export { campaignStats, dashboardStats, type CampaignFunnel, type DashboardStats } from './stats';

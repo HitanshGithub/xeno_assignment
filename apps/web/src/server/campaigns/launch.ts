@@ -1,9 +1,5 @@
 import { prisma } from '@cadence/db';
-import {
-  channelUsesEmail,
-  segmentDefinitionSchema,
-  type SendMessage,
-} from '@cadence/shared';
+import { channelUsesEmail, segmentDefinitionSchema, type SendMessage } from '@cadence/shared';
 import { getBrand } from '../brand';
 import { sendBatch } from '../channel/client';
 import { resolveRecipients, type RecipientRow } from '../segments/evaluate';
@@ -121,14 +117,23 @@ export async function launchCampaign(campaignId: string): Promise<LaunchResult> 
 }
 
 async function applySendResults(
-  results: { communicationId: string; providerMessageId: string | null; status: string; reason?: string }[],
+  results: {
+    communicationId: string;
+    providerMessageId: string | null;
+    status: string;
+    reason?: string;
+  }[],
 ): Promise<void> {
   await Promise.all(
     results.map((r) =>
       r.status === 'REJECTED'
         ? prisma.communication.update({
             where: { id: r.communicationId },
-            data: { status: 'FAILED', failureReason: r.reason ?? 'rejected by channel', failedAt: new Date() },
+            data: {
+              status: 'FAILED',
+              failureReason: r.reason ?? 'rejected by channel',
+              failedAt: new Date(),
+            },
           })
         : prisma.communication.update({
             where: { id: r.communicationId },

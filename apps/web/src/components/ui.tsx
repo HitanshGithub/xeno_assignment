@@ -1,4 +1,9 @@
-import { type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react';
+import {
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type TextareaHTMLAttributes,
+} from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -49,7 +54,7 @@ export function Card({ className, children }: { className?: string; children: Re
   return (
     <div
       className={cn(
-        'rounded-[var(--radius)] border border-border bg-surface/80 backdrop-blur-sm',
+        'border-border bg-surface/80 rounded-[var(--radius)] border backdrop-blur-sm',
         className,
       )}
     >
@@ -102,25 +107,25 @@ export function Stat({
   return (
     <Card className="p-5">
       <div className="flex items-start justify-between">
-        <span className="text-sm text-ink-muted">{label}</span>
+        <span className="text-ink-muted text-sm">{label}</span>
         {icon && <span className="text-brand">{icon}</span>}
       </div>
-      <div className="mt-2 font-display text-3xl tracking-tight">{value}</div>
-      {sub && <div className="mt-1 text-xs text-ink-faint">{sub}</div>}
+      <div className="font-display mt-2 text-3xl tracking-tight">{value}</div>
+      {sub && <div className="text-ink-faint mt-1 text-xs">{sub}</div>}
     </Card>
   );
 }
 
 export function Spinner({ className }: { className?: string }) {
-  return <Loader2 className={cn('size-5 animate-spin text-ink-muted', className)} />;
+  return <Loader2 className={cn('text-ink-muted size-5 animate-spin', className)} />;
 }
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       className={cn(
-        'w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-faint',
-        'focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/40',
+        'border-border bg-surface-2 text-ink placeholder:text-ink-faint w-full rounded-lg border px-3 py-2 text-sm',
+        'focus:border-brand/60 focus:ring-brand/40 focus:ring-1 focus:outline-none',
         className,
       )}
       {...props}
@@ -132,8 +137,8 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   return (
     <textarea
       className={cn(
-        'w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-faint',
-        'focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/40',
+        'border-border bg-surface-2 text-ink placeholder:text-ink-faint w-full rounded-lg border px-3 py-2 text-sm',
+        'focus:border-brand/60 focus:ring-brand/40 focus:ring-1 focus:outline-none',
         className,
       )}
       {...props}
@@ -141,12 +146,20 @@ export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTex
   );
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
+export function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-ink-muted">
+      <span className="text-ink-muted mb-1.5 flex items-center justify-between text-xs font-medium tracking-wide uppercase">
         {label}
-        {hint && <span className="font-normal normal-case text-ink-faint">{hint}</span>}
+        {hint && <span className="text-ink-faint font-normal normal-case">{hint}</span>}
       </span>
       {children}
     </label>
@@ -165,15 +178,15 @@ export function EmptyState({
   icon?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[var(--radius)] border border-dashed border-border px-6 py-14 text-center">
-      {icon && <div className="mb-3 text-ink-faint">{icon}</div>}
-      <h3 className="font-display text-lg text-ink">{title}</h3>
-      {description && <p className="mt-1 max-w-sm text-sm text-ink-muted">{description}</p>}
+    <div className="border-border flex flex-col items-center justify-center rounded-[var(--radius)] border border-dashed px-6 py-14 text-center">
+      {icon && <div className="text-ink-faint mb-3">{icon}</div>}
+      <h3 className="font-display text-ink text-lg">{title}</h3>
+      {description && <p className="text-ink-muted mt-1 max-w-sm text-sm">{description}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse rounded-md bg-surface-3', className)} />;
+  return <div className={cn('bg-surface-3 animate-pulse rounded-md', className)} />;
 }

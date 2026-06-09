@@ -240,9 +240,7 @@ async function main() {
       if (cursor > tenure) break;
       orderDates.push(daysAgo(cursor));
       const gap =
-        persona.cadenceDays[1] === 0
-          ? 0
-          : randInt(persona.cadenceDays[0], persona.cadenceDays[1]);
+        persona.cadenceDays[1] === 0 ? 0 : randInt(persona.cadenceDays[0], persona.cadenceDays[1]);
       cursor += Math.max(1, gap);
     }
     orderDates.reverse(); // oldest → newest
@@ -255,9 +253,7 @@ async function main() {
         externalId: `BB-${String(100000 + i)}`,
         firstName,
         lastName,
-        email: faker.internet
-          .email({ firstName, lastName, provider: 'example.com' })
-          .toLowerCase(),
+        email: faker.internet.email({ firstName, lastName, provider: 'example.com' }).toLowerCase(),
         phone: `+9197${randInt(10000000, 99999999)}`,
         city: pick(CITIES),
         country: 'IN',
@@ -285,7 +281,7 @@ async function main() {
           unitPriceCents: p.priceCents,
         };
       });
-      const total = items.reduce((s, it) => s + it.unitPriceCents * it.quantity, 0);
+      const total = items.reduce((s, it) => s + it.unitPriceCents * (it.quantity ?? 1), 0);
       lifetime += total;
       firstOrderAt ??= date;
       lastOrderAt = date;

@@ -17,8 +17,8 @@ A beat-by-beat script for the narrated video. Times are targets, not rules.
 
 Open the live URL. Start on the **Dashboard** (stats, recent campaigns).
 
-1. **Co-pilot.** Type a goal: *"Win back lapsed weekly drinkers with a cold-brew
-   offer."* Hit generate.
+1. **Co-pilot.** Type a goal: _"Win back lapsed weekly drinkers with a cold-brew
+   offer."_ Hit generate.
    > "From one line, Cadence compiles an **audience** — and crucially shows it as
    > editable rules plus a live preview of exactly who's in. It picks a
    > **channel** with a reason, and drafts a **personalised message**. I can edit

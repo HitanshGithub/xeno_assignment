@@ -40,7 +40,5 @@ export function extractPlaceholders(template: string): string[] {
 
 /** Any placeholders that aren't in the allow-list (empty = valid). */
 export function unknownPlaceholders(template: string): string[] {
-  return extractPlaceholders(template).filter(
-    (p) => !TEMPLATE_VARS.includes(p as TemplateVar),
-  );
+  return extractPlaceholders(template).filter((p) => !TEMPLATE_VARS.includes(p as TemplateVar));
 }

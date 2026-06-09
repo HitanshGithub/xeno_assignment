@@ -11,13 +11,7 @@ import {
   Target,
   Wand2,
 } from 'lucide-react';
-import {
-  CHANNELS,
-  CHANNEL_META,
-  TEMPLATE_VARS,
-  channelMeta,
-  type Channel,
-} from '@cadence/shared';
+import { CHANNELS, CHANNEL_META, TEMPLATE_VARS, channelMeta, type Channel } from '@cadence/shared';
 import { api } from '@/lib/api';
 import type { AiPlanResponse, MessageDraft } from '@/lib/types';
 import type { SegmentDefinition } from '@cadence/shared';
@@ -134,7 +128,7 @@ export default function CopilotPage() {
       {/* Goal input */}
       <Card className="p-5">
         <div className="flex items-start gap-3">
-          <span className="mt-1 grid size-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
+          <span className="bg-brand-soft text-brand mt-1 grid size-9 shrink-0 place-items-center rounded-lg">
             <Sparkles className="size-5" />
           </span>
           <div className="flex-1">
@@ -149,8 +143,12 @@ export default function CopilotPage() {
               className="resize-none border-0 bg-transparent px-0 text-base focus:ring-0"
             />
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-ink-faint">⌘/Ctrl + Enter to generate</span>
-              <Button onClick={() => generate(goal)} loading={phase === 'planning'} disabled={!goal.trim()}>
+              <span className="text-ink-faint text-xs">⌘/Ctrl + Enter to generate</span>
+              <Button
+                onClick={() => generate(goal)}
+                loading={phase === 'planning'}
+                disabled={!goal.trim()}
+              >
                 <Wand2 className="size-4" /> Generate plan
               </Button>
             </div>
@@ -160,13 +158,13 @@ export default function CopilotPage() {
 
       {phase === 'idle' && (
         <div className="mt-5">
-          <p className="mb-2 text-xs uppercase tracking-wide text-ink-faint">Try one of these</p>
+          <p className="text-ink-faint mb-2 text-xs tracking-wide uppercase">Try one of these</p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLES.map((ex) => (
               <button
                 key={ex}
                 onClick={() => generate(ex)}
-                className="rounded-full border border-border bg-surface-2 px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand/40 hover:text-ink"
+                className="border-border bg-surface-2 text-ink-muted hover:border-brand/40 hover:text-ink rounded-full border px-3 py-1.5 text-sm transition-colors"
               >
                 {ex}
               </button>
@@ -176,8 +174,8 @@ export default function CopilotPage() {
       )}
 
       {phase === 'planning' && (
-        <div className="mt-6 flex items-center gap-3 text-ink-muted">
-          <Sparkles className="size-5 animate-pulse-dot text-brand" />
+        <div className="text-ink-muted mt-6 flex items-center gap-3">
+          <Sparkles className="animate-pulse-dot text-brand size-5" />
           Designing your campaign — audience, channel, and message…
         </div>
       )}
@@ -187,8 +185,12 @@ export default function CopilotPage() {
           {/* Left: audience + channel */}
           <div className="space-y-5 lg:col-span-3">
             <Card className="p-5">
-              <SectionTitle icon={<Target className="size-4" />} title="Audience" hint={plan.plan.segmentName} />
-              <p className="mb-3 text-sm text-ink-muted">{plan.description}.</p>
+              <SectionTitle
+                icon={<Target className="size-4" />}
+                title="Audience"
+                hint={plan.plan.segmentName}
+              />
+              <p className="text-ink-muted mb-3 text-sm">{plan.description}.</p>
               <div className="mb-4">
                 <RuleView group={plan.definition} />
               </div>
@@ -213,7 +215,7 @@ export default function CopilotPage() {
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-sm text-ink-faint">{plan.plan.channelRationale}</p>
+              <p className="text-ink-faint mt-3 text-sm">{plan.plan.channelRationale}</p>
             </Card>
           </div>
 
@@ -237,7 +239,7 @@ export default function CopilotPage() {
                   {TEMPLATE_VARS.map((v) => (
                     <span
                       key={v}
-                      className="rounded bg-surface-3 px-1.5 py-0.5 font-mono text-[11px] text-ink-muted"
+                      className="bg-surface-3 text-ink-muted rounded px-1.5 py-0.5 font-mono text-[11px]"
                     >
                       {`{{${v}}}`}
                     </span>
@@ -258,11 +260,12 @@ export default function CopilotPage() {
             </Card>
 
             <Button onClick={launch} loading={launching} className="w-full py-3 text-base">
-              <Rocket className="size-4" /> Launch to {plan.preview.total.toLocaleString('en-IN')} shoppers
+              <Rocket className="size-4" /> Launch to {plan.preview.total.toLocaleString('en-IN')}{' '}
+              shoppers
             </Button>
-            <p className="text-center text-xs text-ink-faint">
-              Opted-out shoppers and anyone without a {channelMeta(channel).addressType} are excluded
-              automatically.
+            <p className="text-ink-faint text-center text-xs">
+              Opted-out shoppers and anyone without a {channelMeta(channel).addressType} are
+              excluded automatically.
             </p>
           </div>
         </div>
@@ -271,12 +274,20 @@ export default function CopilotPage() {
   );
 }
 
-function SectionTitle({ icon, title, hint }: { icon: React.ReactNode; title: string; hint?: string }) {
+function SectionTitle({
+  icon,
+  title,
+  hint,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  hint?: string;
+}) {
   return (
     <div className="mb-3 flex items-center gap-2">
       <span className="text-brand">{icon}</span>
-      <h3 className="font-display text-lg text-ink">{title}</h3>
-      {hint && <span className="ml-auto text-xs text-ink-faint">{hint}</span>}
+      <h3 className="font-display text-ink text-lg">{title}</h3>
+      {hint && <span className="text-ink-faint ml-auto text-xs">{hint}</span>}
     </div>
   );
 }

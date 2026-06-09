@@ -13,7 +13,9 @@ export function pct(num: number, den: number): string {
 }
 
 export function compactNumber(n: number): string {
-  return new Intl.NumberFormat('en-IN', { notation: n >= 10000 ? 'compact' : 'standard' }).format(n);
+  return new Intl.NumberFormat('en-IN', { notation: n >= 10000 ? 'compact' : 'standard' }).format(
+    n,
+  );
 }
 
 /** "3 days ago", "in 2 months", etc. */

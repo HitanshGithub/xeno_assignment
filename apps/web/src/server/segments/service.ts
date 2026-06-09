@@ -44,10 +44,7 @@ export function getSegment(id: string): Promise<Segment | null> {
   return prisma.segment.findUnique({ where: { id } });
 }
 
-export async function updateSegment(
-  id: string,
-  patch: Partial<SegmentInput>,
-): Promise<Segment> {
+export async function updateSegment(id: string, patch: Partial<SegmentInput>): Promise<Segment> {
   const data: Prisma.SegmentUpdateInput = {};
   if (patch.name !== undefined) data.name = patch.name;
   if (patch.description !== undefined) data.description = patch.description;

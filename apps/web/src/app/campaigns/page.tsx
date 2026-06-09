@@ -33,20 +33,22 @@ export default function CampaignsPage() {
         </div>
       ) : data && data.length > 0 ? (
         <Card>
-          <ul className="divide-y divide-border">
+          <ul className="divide-border divide-y">
             {data.map((c) => (
               <li key={c.id}>
                 <Link
                   href={`/campaigns/${c.id}`}
-                  className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-2"
+                  className="hover:bg-surface-2 flex items-center gap-4 px-5 py-4 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium text-ink">{c.name}</div>
-                    {c.goal && <div className="mt-0.5 truncate text-sm text-ink-muted">{c.goal}</div>}
-                    <div className="mt-1 text-xs text-ink-faint">
+                    <div className="text-ink truncate font-medium">{c.name}</div>
+                    {c.goal && (
+                      <div className="text-ink-muted mt-0.5 truncate text-sm">{c.goal}</div>
+                    )}
+                    <div className="text-ink-faint mt-1 text-xs">
                       {c.segment?.name ?? 'No segment'}
-                      {c.segment?.cachedCount != null && ` · ${c.segment.cachedCount} shoppers`} ·{' '}
-                      {relativeTime(c.createdAt)}
+                      {c.segment?.cachedCount != null &&
+                        ` · ${c.segment.cachedCount} shoppers`} · {relativeTime(c.createdAt)}
                     </div>
                   </div>
                   <ChannelBadge channel={c.channel} />

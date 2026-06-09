@@ -9,12 +9,14 @@ import type { BrandContext } from './types';
  */
 
 export function fieldCatalogText(): string {
-  return (FIELDS as readonly FieldDef[]).map((f) => {
-    const ops = f.operators.join(', ');
-    const opts = f.options ? ` Options: ${f.options.join(', ')}.` : '';
-    const unit = f.unit ? ` Unit: ${f.unit}.` : '';
-    return `- ${f.key} (${f.type}) — ${f.description} Operators: ${ops}.${unit}${opts}`;
-  }).join('\n');
+  return (FIELDS as readonly FieldDef[])
+    .map((f) => {
+      const ops = f.operators.join(', ');
+      const opts = f.options ? ` Options: ${f.options.join(', ')}.` : '';
+      const unit = f.unit ? ` Unit: ${f.unit}.` : '';
+      return `- ${f.key} (${f.type}) — ${f.description} Operators: ${ops}.${unit}${opts}`;
+    })
+    .join('\n');
 }
 
 const VALUE_CONVENTIONS = `Value conventions:

@@ -23,10 +23,7 @@ export class ChannelError extends Error {
  * the caller can decide what to do (the launch path leaves communications
  * QUEUED on failure — they're safe to retry thanks to per-message idempotency).
  */
-export async function sendBatch(
-  batchId: string,
-  messages: SendMessage[],
-): Promise<SendResponse> {
+export async function sendBatch(batchId: string, messages: SendMessage[]): Promise<SendResponse> {
   const payload = {
     batchId,
     callbackUrl: `${env.CRM_BASE_URL}/api/receipts`,

@@ -19,16 +19,18 @@ export function AudiencePreview({ preview }: { preview: PreviewData }) {
   return (
     <div>
       <div className="flex items-center gap-2 text-sm">
-        <Users className="size-4 text-brand" />
-        <span className="font-display text-2xl text-ink">{preview.total.toLocaleString('en-IN')}</span>
+        <Users className="text-brand size-4" />
+        <span className="font-display text-ink text-2xl">
+          {preview.total.toLocaleString('en-IN')}
+        </span>
         <span className="text-ink-muted">shoppers match</span>
       </div>
 
       {preview.sample.length > 0 ? (
-        <div className="mt-3 overflow-hidden rounded-lg border border-border">
+        <div className="border-border mt-3 overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-surface-2 text-left text-xs uppercase tracking-wide text-ink-faint">
+              <tr className="border-border bg-surface-2 text-ink-faint border-b text-left text-xs tracking-wide uppercase">
                 <th className="px-3 py-2 font-medium">Shopper</th>
                 <th className="px-3 py-2 font-medium">City</th>
                 <th className="px-3 py-2 text-right font-medium">Orders</th>
@@ -38,26 +40,30 @@ export function AudiencePreview({ preview }: { preview: PreviewData }) {
             </thead>
             <tbody>
               {preview.sample.map((c) => (
-                <tr key={c.id} className="border-b border-border/60 last:border-0">
-                  <td className="px-3 py-2 text-ink">{c.name}</td>
-                  <td className="px-3 py-2 text-ink-muted">{c.city ?? '—'}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-ink-muted">{c.orderCount}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-ink">
+                <tr key={c.id} className="border-border/60 border-b last:border-0">
+                  <td className="text-ink px-3 py-2">{c.name}</td>
+                  <td className="text-ink-muted px-3 py-2">{c.city ?? '—'}</td>
+                  <td className="text-ink-muted px-3 py-2 text-right tabular-nums">
+                    {c.orderCount}
+                  </td>
+                  <td className="text-ink px-3 py-2 text-right tabular-nums">
                     {money(c.lifetimeValueCents)}
                   </td>
-                  <td className="px-3 py-2 text-right text-ink-muted">{relativeTime(c.lastOrderAt)}</td>
+                  <td className="text-ink-muted px-3 py-2 text-right">
+                    {relativeTime(c.lastOrderAt)}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
           {preview.total > preview.sample.length && (
-            <div className="bg-surface-2 px-3 py-2 text-center text-xs text-ink-faint">
+            <div className="bg-surface-2 text-ink-faint px-3 py-2 text-center text-xs">
               + {(preview.total - preview.sample.length).toLocaleString('en-IN')} more
             </div>
           )}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-ink-faint">No shoppers match these rules yet.</p>
+        <p className="text-ink-faint mt-3 text-sm">No shoppers match these rules yet.</p>
       )}
     </div>
   );

@@ -52,18 +52,18 @@ openssl rand -hex 32   # → CHANNEL_CALLBACK_SECRET
 
 1. **Import** this repo. Set **Root Directory** to `apps/web`
    ([`apps/web/vercel.json`](./apps/web/vercel.json) handles the monorepo install
-   + Prisma generate).
+   - Prisma generate).
 2. Environment variables:
 
-   | Key | Value |
-   | --- | --- |
-   | `DATABASE_URL` | your Neon pooled string |
-   | `CHANNEL_SERVICE_URL` | the Render channel URL (step 2) |
-   | `CHANNEL_SERVICE_API_KEY` | secret from step 0 |
-   | `CHANNEL_CALLBACK_SECRET` | secret from step 0 |
-   | `AI_PROVIDER` | `auto` |
-   | `ANTHROPIC_API_KEY` | your key (optional — omit to run the free mock AI) |
-   | `CRM_BASE_URL` | set after the first deploy (step 4) |
+   | Key                       | Value                                              |
+   | ------------------------- | -------------------------------------------------- |
+   | `DATABASE_URL`            | your Neon pooled string                            |
+   | `CHANNEL_SERVICE_URL`     | the Render channel URL (step 2)                    |
+   | `CHANNEL_SERVICE_API_KEY` | secret from step 0                                 |
+   | `CHANNEL_CALLBACK_SECRET` | secret from step 0                                 |
+   | `AI_PROVIDER`             | `auto`                                             |
+   | `ANTHROPIC_API_KEY`       | your key (optional — omit to run the free mock AI) |
+   | `CRM_BASE_URL`            | set after the first deploy (step 4)                |
 
 3. Deploy. Vercel gives you a URL, e.g. `https://cadence.vercel.app`.
 

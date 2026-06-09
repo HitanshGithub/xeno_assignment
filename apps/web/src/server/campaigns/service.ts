@@ -36,10 +36,7 @@ export function getCampaign(id: string) {
   return prisma.campaign.findUnique({ where: { id }, include: { segment: true } });
 }
 
-export async function updateCampaign(
-  id: string,
-  patch: Partial<CampaignInput>,
-): Promise<Campaign> {
+export async function updateCampaign(id: string, patch: Partial<CampaignInput>): Promise<Campaign> {
   const campaign = await prisma.campaign.findUniqueOrThrow({ where: { id } });
   if (campaign.status !== 'DRAFT') {
     throw new Error('only draft campaigns can be edited');

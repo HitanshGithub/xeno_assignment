@@ -66,7 +66,8 @@ function describeCondition(cond: Condition): string {
 }
 
 function formatValue(cond: Condition): string {
-  if (Array.isArray(cond.value)) return cond.value.map((v) => formatScalar(cond.field, v)).join(', ');
+  if (Array.isArray(cond.value))
+    return cond.value.map((v) => formatScalar(cond.field, v)).join(', ');
   return formatScalar(cond.field, cond.value);
 }
 

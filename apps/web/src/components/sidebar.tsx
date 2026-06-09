@@ -15,14 +15,14 @@ const NAV = [
 export function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-border bg-surface/60 px-3 py-5">
+    <aside className="border-border bg-surface/60 flex h-screen w-60 shrink-0 flex-col border-r px-3 py-5">
       <Link href="/" className="mb-7 flex items-center gap-2.5 px-2">
-        <span className="grid size-9 place-items-center rounded-xl bg-brand text-brand-ink">
+        <span className="bg-brand text-brand-ink grid size-9 place-items-center rounded-xl">
           <Coffee className="size-5" />
         </span>
         <div className="leading-tight">
           <div className="font-display text-xl tracking-tight">Cadence</div>
-          <div className="text-[11px] text-ink-faint">Brew &amp; Bean</div>
+          <div className="text-ink-faint text-[11px]">Brew &amp; Bean</div>
         </div>
       </Link>
 
@@ -45,7 +45,7 @@ export function Sidebar() {
               <Icon className={cn('size-[18px]', active && 'text-brand')} />
               {item.label}
               {item.highlight && (
-                <span className="ml-auto rounded-full bg-brand-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand">
+                <span className="bg-brand-soft text-brand ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
                   AI
                 </span>
               )}
@@ -54,7 +54,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-4 rounded-lg border border-border bg-surface-2 p-3 text-xs text-ink-faint">
+      <div className="border-border bg-surface-2 text-ink-faint mt-4 rounded-lg border p-3 text-xs">
         Describe a goal in the <span className="text-brand">Co-pilot</span> — Cadence finds the
         audience, writes the message, and sends it.
       </div>

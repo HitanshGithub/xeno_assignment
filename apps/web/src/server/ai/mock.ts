@@ -20,7 +20,16 @@ import type {
  */
 type Cond = SegmentPlan['conditions'][number];
 
-const CITIES = ['mumbai', 'bengaluru', 'delhi', 'pune', 'hyderabad', 'chennai', 'gurugram', 'kolkata'];
+const CITIES = [
+  'mumbai',
+  'bengaluru',
+  'delhi',
+  'pune',
+  'hyderabad',
+  'chennai',
+  'gurugram',
+  'kolkata',
+];
 const CATEGORIES: Record<string, string> = {
   bean: 'Beans',
   beans: 'Beans',
@@ -43,7 +52,11 @@ function parseIntent(text: string): { conditions: Cond[]; name: string; combinat
   const days = dayMatch ? Number(dayMatch[1]) : null;
 
   if (/(lapsed|win[\s-]?back|haven'?t|inactive|gone quiet|slipping|dormant)/.test(t)) {
-    conditions.push({ field: 'daysSinceLastOrder', op: 'between', value: [days ?? 40, (days ?? 40) + 80] });
+    conditions.push({
+      field: 'daysSinceLastOrder',
+      op: 'between',
+      value: [days ?? 40, (days ?? 40) + 80],
+    });
     conditions.push({ field: 'orderCount', op: 'gte', value: 10 });
     labels.push('Lapsed buyers');
   } else if (/(churn|lost|left)/.test(t)) {
@@ -71,7 +84,11 @@ function parseIntent(text: string): { conditions: Cond[]; name: string; combinat
 
   for (const city of CITIES) {
     if (t.includes(city)) {
-      conditions.push({ field: 'city', op: 'eq', value: city.charAt(0).toUpperCase() + city.slice(1) });
+      conditions.push({
+        field: 'city',
+        op: 'eq',
+        value: city.charAt(0).toUpperCase() + city.slice(1),
+      });
       labels.push(`in ${city.charAt(0).toUpperCase() + city.slice(1)}`);
       break;
     }
@@ -101,11 +118,18 @@ function pickChannel(goal: string): Channel {
   return 'WHATSAPP';
 }
 
-function draftFor(channel: Channel, goal: string, brand: string): { subject: string; body: string } {
+function draftFor(
+  channel: Channel,
+  goal: string,
+  brand: string,
+): { subject: string; body: string } {
   const meta = channelMeta(channel);
   const hook = goal.trim().replace(/\.$/, '');
   if (channel === 'SMS') {
-    return { subject: '', body: `Hi {{firstName}}! ${brand} here — ${hook}. Reply STOP to opt out.` };
+    return {
+      subject: '',
+      body: `Hi {{firstName}}! ${brand} here — ${hook}. Reply STOP to opt out.`,
+    };
   }
   const body =
     `Hi {{firstName}}, it's ${brand} ☕️\n\n` +
@@ -134,7 +158,8 @@ export class MockAi implements CadenceAi {
     return {
       subject,
       body,
-      rationale: 'Templated draft (no AI key configured): channel-aware copy grounded in the goal and brand name.',
+      rationale:
+        'Templated draft (no AI key configured): channel-aware copy grounded in the goal and brand name.',
     };
   }
 

@@ -30,7 +30,12 @@ interface AcceptedMessage {
  * probability delivered twice — same eventId — so the CRM's dedupe is exercised
  * for real, not just asserted.
  */
-export function dispatch({ message, providerMessageId, callbackUrl, acceptedAtMs }: AcceptedMessage) {
+export function dispatch({
+  message,
+  providerMessageId,
+  callbackUrl,
+  acceptedAtMs,
+}: AcceptedMessage) {
   const timeline = simulate(message);
   let seq = 0;
   for (const event of timeline) {

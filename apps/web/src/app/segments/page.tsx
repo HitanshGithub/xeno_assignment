@@ -13,7 +13,12 @@ import { AudiencePreview, type PreviewData } from '@/components/audience-preview
 import { relativeTime } from '@/lib/format';
 
 interface AiSegmentResponse {
-  plan: { name: string; description: string; combinator: 'AND' | 'OR'; conditions: SegmentDefinition['conditions'] };
+  plan: {
+    name: string;
+    description: string;
+    combinator: 'AND' | 'OR';
+    conditions: SegmentDefinition['conditions'];
+  };
   definition: SegmentDefinition;
   description: string;
   preview: PreviewData;
@@ -83,9 +88,9 @@ export default function SegmentsPage() {
         </div>
 
         {draft && (
-          <div className="mt-5 animate-fade-up border-t border-border pt-5">
+          <div className="animate-fade-up border-border mt-5 border-t pt-5">
             <div className="mb-2 flex items-center gap-2">
-              <span className="font-display text-lg text-ink">{draft.plan.name}</span>
+              <span className="font-display text-ink text-lg">{draft.plan.name}</span>
               <Badge tone="brand">
                 <Sparkles className="size-3" /> AI
               </Badge>
@@ -115,15 +120,17 @@ export default function SegmentsPage() {
           {data.map((s) => (
             <Card key={s.id} className="p-5">
               <div className="mb-1 flex items-center gap-2">
-                <span className="font-display text-lg text-ink">{s.name}</span>
-                <Badge tone={s.source === 'AI' ? 'brand' : 'neutral'}>{s.source === 'AI' ? 'AI' : 'Manual'}</Badge>
-                <span className="ml-auto inline-flex items-center gap-1 text-sm text-ink-muted">
+                <span className="font-display text-ink text-lg">{s.name}</span>
+                <Badge tone={s.source === 'AI' ? 'brand' : 'neutral'}>
+                  {s.source === 'AI' ? 'AI' : 'Manual'}
+                </Badge>
+                <span className="text-ink-muted ml-auto inline-flex items-center gap-1 text-sm">
                   <Users className="size-3.5" /> {s.cachedCount ?? '—'}
                 </span>
               </div>
-              {s.description && <p className="mb-3 text-sm text-ink-muted">{s.description}</p>}
+              {s.description && <p className="text-ink-muted mb-3 text-sm">{s.description}</p>}
               <RuleView group={s.definition} />
-              <div className="mt-3 text-xs text-ink-faint">Created {relativeTime(s.createdAt)}</div>
+              <div className="text-ink-faint mt-3 text-xs">Created {relativeTime(s.createdAt)}</div>
             </Card>
           ))}
         </div>

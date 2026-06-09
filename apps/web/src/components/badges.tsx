@@ -1,4 +1,9 @@
-import { CHANNEL_META, type Channel, type CampaignStatus, type CommunicationStatus } from '@cadence/shared';
+import {
+  CHANNEL_META,
+  type Channel,
+  type CampaignStatus,
+  type CommunicationStatus,
+} from '@cadence/shared';
 import { Badge } from './ui';
 
 export function ChannelBadge({ channel }: { channel: Channel }) {
@@ -22,7 +27,9 @@ const CAMPAIGN_TONE: Record<CampaignStatus, Parameters<typeof Badge>[0]['tone']>
 export function CampaignStatusBadge({ status }: { status: CampaignStatus }) {
   return (
     <Badge tone={CAMPAIGN_TONE[status]}>
-      {status === 'RUNNING' && <span className="size-1.5 animate-pulse-dot rounded-full bg-brand" />}
+      {status === 'RUNNING' && (
+        <span className="animate-pulse-dot bg-brand size-1.5 rounded-full" />
+      )}
       {status.charAt(0) + status.slice(1).toLowerCase()}
     </Badge>
   );

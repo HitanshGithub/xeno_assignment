@@ -95,10 +95,7 @@ async function applyEvent(event: ReceiptEvent): Promise<Outcome> {
       });
 
       const update: Prisma.CommunicationUpdateInput = {};
-      const { status, advanced } = projectStatus(
-        current.status as CommunicationStatus,
-        event.type,
-      );
+      const { status, advanced } = projectStatus(current.status as CommunicationStatus, event.type);
       if (advanced) update.status = status;
 
       // Record the stage timestamp if not already set (even out of order).

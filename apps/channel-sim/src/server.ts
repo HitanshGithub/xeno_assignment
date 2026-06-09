@@ -15,7 +15,10 @@ import { randomId } from './random';
 const log = createLogger('http');
 const startedAt = Date.now();
 
-function recipientLooksValid(channel: Parameters<typeof channelMeta>[0], recipient: string): boolean {
+function recipientLooksValid(
+  channel: Parameters<typeof channelMeta>[0],
+  recipient: string,
+): boolean {
   const meta = channelMeta(channel);
   if (meta.addressType === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient);
   // phone: + and 8–15 digits

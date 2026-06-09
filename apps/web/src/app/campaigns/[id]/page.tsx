@@ -55,7 +55,7 @@ export default function CampaignDetailPage() {
     <div className="animate-fade-up">
       <Link
         href="/campaigns"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink"
+        className="text-ink-muted hover:text-ink mb-4 inline-flex items-center gap-1.5 text-sm"
       >
         <ArrowLeft className="size-4" /> Campaigns
       </Link>
@@ -76,10 +76,10 @@ export default function CampaignDetailPage() {
         <div className="space-y-5 lg:col-span-2">
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-display text-lg text-ink">Performance funnel</h3>
+              <h3 className="font-display text-ink text-lg">Performance funnel</h3>
               {live && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-brand">
-                  <span className="size-1.5 animate-pulse-dot rounded-full bg-brand" /> Live ·
+                <span className="text-brand inline-flex items-center gap-1.5 text-xs">
+                  <span className="animate-pulse-dot bg-brand size-1.5 rounded-full" /> Live ·
                   updating as receipts arrive
                 </span>
               )}
@@ -90,34 +90,39 @@ export default function CampaignDetailPage() {
           <Card className="p-5">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Lightbulb className="size-4 text-brand" />
-                <h3 className="font-display text-lg text-ink">AI insight</h3>
+                <Lightbulb className="text-brand size-4" />
+                <h3 className="font-display text-ink text-lg">AI insight</h3>
               </div>
-              <Button variant="secondary" size="sm" onClick={generateInsight} loading={loadingInsight}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={generateInsight}
+                loading={loadingInsight}
+              >
                 <Sparkles className="size-3.5" /> {insight ? 'Refresh' : 'Read the results'}
               </Button>
             </div>
             {insight ? (
               <div className="space-y-3">
-                <p className="font-display text-lg text-ink">{insight.headline}</p>
-                <p className="text-sm leading-relaxed text-ink-muted">{insight.narrative}</p>
+                <p className="font-display text-ink text-lg">{insight.headline}</p>
+                <p className="text-ink-muted text-sm leading-relaxed">{insight.narrative}</p>
                 <ul className="flex flex-wrap gap-2">
                   {insight.takeaways.map((t, i) => (
                     <li
                       key={i}
-                      className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs text-ink-muted"
+                      className="border-border bg-surface-2 text-ink-muted rounded-full border px-2.5 py-1 text-xs"
                     >
                       {t}
                     </li>
                   ))}
                 </ul>
-                <div className="rounded-lg border border-brand/25 bg-brand-soft/40 px-3 py-2.5 text-sm">
-                  <span className="font-medium text-brand">Recommended next: </span>
+                <div className="border-brand/25 bg-brand-soft/40 rounded-lg border px-3 py-2.5 text-sm">
+                  <span className="text-brand font-medium">Recommended next: </span>
                   <span className="text-ink">{insight.recommendation}</span>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-ink-faint">
+              <p className="text-ink-faint text-sm">
                 Let Cadence read this campaign&apos;s funnel and tell you what worked and what to do
                 next.
               </p>
@@ -126,18 +131,18 @@ export default function CampaignDetailPage() {
 
           {/* Communications */}
           <Card className="p-5">
-            <h3 className="mb-3 font-display text-lg text-ink">Recent communications</h3>
+            <h3 className="font-display text-ink mb-3 text-lg">Recent communications</h3>
             {sample.length > 0 ? (
-              <div className="overflow-hidden rounded-lg border border-border">
+              <div className="border-border overflow-hidden rounded-lg border">
                 <table className="w-full text-sm">
                   <tbody>
                     {sample.map((c) => (
-                      <tr key={c.id} className="border-b border-border/60 last:border-0">
-                        <td className="px-3 py-2 text-ink">
+                      <tr key={c.id} className="border-border/60 border-b last:border-0">
+                        <td className="text-ink px-3 py-2">
                           {c.customer.firstName} {c.customer.lastName ?? ''}
                         </td>
-                        <td className="px-3 py-2 text-ink-faint">{c.recipient}</td>
-                        <td className="px-3 py-2 text-right text-xs text-ink-faint">
+                        <td className="text-ink-faint px-3 py-2">{c.recipient}</td>
+                        <td className="text-ink-faint px-3 py-2 text-right text-xs">
                           {relativeTime(c.updatedAt)}
                         </td>
                         <td className="px-3 py-2 text-right">
@@ -149,7 +154,7 @@ export default function CampaignDetailPage() {
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-ink-faint">No communications yet.</p>
+              <p className="text-ink-faint text-sm">No communications yet.</p>
             )}
           </Card>
         </div>
@@ -158,8 +163,8 @@ export default function CampaignDetailPage() {
         <div className="space-y-5">
           <Card className="p-5">
             <div className="mb-3 flex items-center gap-2">
-              <MessageSquareText className="size-4 text-brand" />
-              <h3 className="font-display text-lg text-ink">Message</h3>
+              <MessageSquareText className="text-brand size-4" />
+              <h3 className="font-display text-ink text-lg">Message</h3>
             </div>
             {campaign.messageSubject && (
               <div className="mb-2 text-sm">
@@ -167,7 +172,7 @@ export default function CampaignDetailPage() {
                 <span className="text-ink">{campaign.messageSubject}</span>
               </div>
             )}
-            <div className="whitespace-pre-wrap rounded-lg border border-border bg-surface-2 p-3 text-sm text-ink">
+            <div className="border-border bg-surface-2 text-ink rounded-lg border p-3 text-sm whitespace-pre-wrap">
               {campaign.messageBody}
             </div>
           </Card>
@@ -175,20 +180,20 @@ export default function CampaignDetailPage() {
           {campaign.segment && (
             <Card className="p-5">
               <div className="mb-3 flex items-center gap-2">
-                <Target className="size-4 text-brand" />
-                <h3 className="font-display text-lg text-ink">Audience</h3>
-                <span className="ml-auto text-xs text-ink-faint">
+                <Target className="text-brand size-4" />
+                <h3 className="font-display text-ink text-lg">Audience</h3>
+                <span className="text-ink-faint ml-auto text-xs">
                   {campaign.segment.cachedCount ?? '—'} shoppers
                 </span>
               </div>
-              <div className="mb-2 text-sm text-ink-muted">{campaign.segment.name}</div>
+              <div className="text-ink-muted mb-2 text-sm">{campaign.segment.name}</div>
               <RuleView group={campaign.segment.definition} />
             </Card>
           )}
 
           {isRationale(campaign.aiRationale) && (
             <Card className="p-5">
-              <h3 className="mb-2 font-display text-lg text-ink">Why this plan</h3>
+              <h3 className="font-display text-ink mb-2 text-lg">Why this plan</h3>
               <dl className="space-y-2 text-sm">
                 {campaign.aiRationale.channel && (
                   <Rationale label="Channel" text={campaign.aiRationale.channel} />
@@ -208,7 +213,7 @@ export default function CampaignDetailPage() {
 function Rationale({ label, text }: { label: string; text: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-ink-faint">{label}</dt>
+      <dt className="text-ink-faint text-xs tracking-wide uppercase">{label}</dt>
       <dd className="text-ink-muted">{text}</dd>
     </div>
   );

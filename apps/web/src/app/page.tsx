@@ -33,17 +33,17 @@ export default function DashboardPage() {
       {/* Co-pilot CTA */}
       <Card className="mb-8 overflow-hidden">
         <Link href="/copilot" className="group flex items-center gap-5 p-6">
-          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand">
+          <span className="bg-brand-soft text-brand grid size-12 shrink-0 place-items-center rounded-xl">
             <Sparkles className="size-6" />
           </span>
           <div className="flex-1">
-            <div className="font-display text-xl text-ink">Describe a goal, ship a campaign</div>
-            <p className="mt-0.5 text-sm text-ink-muted">
+            <div className="font-display text-ink text-xl">Describe a goal, ship a campaign</div>
+            <p className="text-ink-muted mt-0.5 text-sm">
               “Win back lapsed weekly drinkers with a cold-brew offer” → audience, message, channel,
               sent.
             </p>
           </div>
-          <ArrowRight className="size-5 text-ink-faint transition-transform group-hover:translate-x-1 group-hover:text-brand" />
+          <ArrowRight className="text-ink-faint group-hover:text-brand size-5 transition-transform group-hover:translate-x-1" />
         </Link>
       </Card>
 
@@ -86,8 +86,8 @@ export default function DashboardPage() {
       {/* Recent campaigns */}
       <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-xl text-ink">Recent campaigns</h2>
-          <Link href="/campaigns" className="text-sm text-ink-muted hover:text-brand">
+          <h2 className="font-display text-ink text-xl">Recent campaigns</h2>
+          <Link href="/campaigns" className="text-ink-muted hover:text-brand text-sm">
             View all →
           </Link>
         </div>
@@ -95,16 +95,16 @@ export default function DashboardPage() {
           <Skeleton className="h-40" />
         ) : data && data.campaigns.length > 0 ? (
           <Card>
-            <ul className="divide-y divide-border">
+            <ul className="divide-border divide-y">
               {data.campaigns.map((c) => (
                 <li key={c.id}>
                   <Link
                     href={`/campaigns/${c.id}`}
-                    className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-2"
+                    className="hover:bg-surface-2 flex items-center gap-4 px-5 py-4 transition-colors"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium text-ink">{c.name}</div>
-                      <div className="mt-0.5 truncate text-xs text-ink-faint">
+                      <div className="text-ink truncate font-medium">{c.name}</div>
+                      <div className="text-ink-faint mt-0.5 truncate text-xs">
                         {c.segment?.name ?? 'No segment'} · {relativeTime(c.createdAt)}
                       </div>
                     </div>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
             </ul>
           </Card>
         ) : (
-          <Card className="p-10 text-center text-sm text-ink-muted">
+          <Card className="text-ink-muted p-10 text-center text-sm">
             No campaigns yet — start one from the Co-pilot.
           </Card>
         )}

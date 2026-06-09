@@ -180,13 +180,13 @@ The honest framing: **this is built for a single brand, low-thousands of
 customers, demo-scale throughput** — and engineered so the seams that would
 break at real scale are visible and swappable rather than hidden.
 
-| Concern | What I did for this scope | What I'd do at real scale |
-| --- | --- | --- |
-| Delivery queue | In-process queue with retry/backoff + idempotency, behind an interface | SQS / Redis Streams / Kafka with the same idempotency contract |
-| Receipt ingestion | HTTP endpoint writing an append-only event log | Webhook → queue → batch writer; partition by communication id |
-| Segment evaluation | Compile rule tree → SQL, evaluate on demand | Materialised audiences + incremental recompute on data change |
-| DB | Single Postgres (Neon) | Read replicas; events to a columnar store for analytics |
-| AI calls | Synchronous per request | Cached + batched; async for bulk drafting |
+| Concern            | What I did for this scope                                              | What I'd do at real scale                                      |
+| ------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Delivery queue     | In-process queue with retry/backoff + idempotency, behind an interface | SQS / Redis Streams / Kafka with the same idempotency contract |
+| Receipt ingestion  | HTTP endpoint writing an append-only event log                         | Webhook → queue → batch writer; partition by communication id  |
+| Segment evaluation | Compile rule tree → SQL, evaluate on demand                            | Materialised audiences + incremental recompute on data change  |
+| DB                 | Single Postgres (Neon)                                                 | Read replicas; events to a columnar store for analytics        |
+| AI calls           | Synchronous per request                                                | Cached + batched; async for bulk drafting                      |
 
 The guiding principle: **make the expensive, lossy, asynchronous parts explicit
 in the design even at small scale**, so the reasoning is legible.
