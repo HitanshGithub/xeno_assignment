@@ -1,0 +1,55 @@
+# One command to run the whole thing locally or on any Docker host:
+#   docker compose up --build
+#   docker compose exec web npm run db:seed      # load the Brew & Bean dataset
+#
+# Postgres stays on the internal network (no host port), so it won't clash with
+# anything already on 5432. Override the published web/channel ports with
+# WEB_PORT / CHANNEL_PORT if 3000 / 4000 are taken.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cadence
+      POSTGRES_PASSWORD: cadence
+      POSTGRES_DB: cadence
+    volumes:
+      - cadence-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cadence']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build: .
+    # Sync the schema, then serve. db push is idempotent (no data loss).
+    command: sh -c "npm run db:push && npm run start -w @cadence/web"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://cadence:cadence@postgres:5432/cadence?schema=public
+      CHANNEL_SERVICE_URL: http://channel:4000
+      CRM_BASE_URL: http://web:3000
+      CHANNEL_SERVICE_API_KEY: ${CHANNEL_SERVICE_API_KEY:-dev-send-key-change-me}
+      CHANNEL_CALLBACK_SECRET: ${CHANNEL_CALLBACK_SECRET:-dev-callback-secret-change-me}
+      AI_PROVIDER: ${AI_PROVIDER:-auto}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+
+  channel:
+    build: .
+    command: npm run start -w @cadence/channel-sim
+    environment:
+      CHANNEL_PORT: '4000'
+      CRM_BASE_URL: http://web:3000
+      CHANNEL_SERVICE_API_KEY: ${CHANNEL_SERVICE_API_KEY:-dev-send-key-change-me}
+      CHANNEL_CALLBACK_SECRET: ${CHANNEL_CALLBACK_SECRET:-dev-callback-secret-change-me}
+      CHANNEL_SPEED: ${CHANNEL_SPEED:-0.15}
+    ports:
+      - '${CHANNEL_PORT:-4000}:4000'
+
+volumes:
+  cadence-pgdata:

@@ -1,0 +1,31 @@
+# Render blueprint for the channel simulator (the second service).
+# The CRM/web app deploys to Vercel; the channel service is a plain Node web
+# service and Render is the simplest home for it.
+#
+# Deploy: New + → Blueprint → point at this repo. Render reads this file.
+# Render injects PORT automatically; the service reads it (see config.ts).
+#
+# After both are up, set the three sync:false vars below to the SAME secrets you
+# put in Vercel, and CRM_BASE_URL to your Vercel app URL. See DEPLOY.md.
+services:
+  - type: web
+    name: cadence-channel
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run start -w @cadence/channel-sim
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: '20'
+      - key: CHANNEL_SPEED
+        value: '0.12'
+      # Must match the values set in Vercel.
+      - key: CHANNEL_SERVICE_API_KEY
+        sync: false
+      - key: CHANNEL_CALLBACK_SECRET
+        sync: false
+      # Your deployed CRM (Vercel) URL, e.g. https://cadence.vercel.app
+      - key: CRM_BASE_URL
+        sync: false

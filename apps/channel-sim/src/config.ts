@@ -11,7 +11,8 @@ function num(name: string, fallback: number): number {
 }
 
 export const config = {
-  port: num('CHANNEL_PORT', 4000),
+  // Prefer CHANNEL_PORT; fall back to a platform-injected PORT (Render/Heroku).
+  port: num('CHANNEL_PORT', num('PORT', 4000)),
 
   /** Bearer token the CRM must present on /v1/send. */
   apiKey: process.env.CHANNEL_SERVICE_API_KEY ?? 'dev-send-key-change-me',

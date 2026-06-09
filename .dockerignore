@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.git
+.env
+.env.local
+*.log
+coverage
+.vercel
+.turbo
+next-env.d.ts
