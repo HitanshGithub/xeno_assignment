@@ -55,18 +55,44 @@ portable enough to lift into its own service later.
 
 ## 2. The delivery loop (the core)
 
-_Fills in with Phase 3._ Design contract:
+Two HTTP hops, authenticated differently because they have different trust
+needs:
 
-- **Send** is fire-and-forget from the CRM's perspective. It writes a
-  `Communication` row in `QUEUED`, then hands off to the channel service and
-  returns. The marketer never waits on delivery.
-- **Receipts** arrive asynchronously, **out of order**, and **at least once**.
-  The CRM treats them as an event stream: each receipt is idempotent (dedup key)
-  and applied as a **monotonic state transition** so a late `delivered` can
-  never clobber an already-recorded `clicked`.
-- **The channel is allowed to misbehave** — it drops, delays, reorders, and
-  occasionally hard-fails — because a stub that always succeeds teaches the CRM
-  nothing.
+```
+ CRM ──POST /v1/send──────────────▶ channel-sim     (Bearer token)
+        batch of messages              accept/reject synchronously,
+                                        then simulate each lifecycle async
+ CRM ◀─POST /api/receipts──────────── channel-sim     (HMAC-SHA256 of body)
+        one event per call             delivered/opened/read/clicked/
+        idempotent on eventId          converted/failed/bounced/unsubscribed
+```
+
+The contract (`@cadence/shared`):
+
+- **Send is fire-and-forget.** The CRM writes `Communication` rows as `QUEUED`,
+  hands the batch to the channel, records the returned `providerMessageId`s, and
+  returns `202`. The marketer never waits on delivery. A replayed batch is a
+  no-op (idempotency key per message).
+- **Receipts are the asynchronous truth** — delivered **at least once**, often
+  **out of order**. The CRM treats each as an event: dedup on `eventId`, append
+  to the log, then advance the cached `status` **monotonically** (a late
+  `DELIVERED` after a `CLICKED` changes nothing). See
+  [`lifecycle.ts`](./packages/shared/src/lifecycle.ts).
+- **The channel is built to misbehave** — it reorders (independent timers),
+  duplicates (`CHANNEL_DUPLICATE_RATE`), hard-fails a share, and retries failed
+  callbacks with exponential backoff before dead-lettering — because a stub that
+  always succeeds proves nothing about the CRM.
+
+**Why a `RetryQueue` and not just `await fetch`.** The receipt hop is wrapped in
+a bounded-concurrency queue with backoff + a dead-letter sink
+([`queue.ts`](./apps/channel-sim/src/queue.ts)). It's the in-process stand-in
+for SQS / Redis Streams, kept behind a small interface so the production swap is
+mechanical. The CRM side is symmetric: receipts land on an append-only log first
+(durable), and the status projection is derived — so even a crash mid-ingest
+can't corrupt state.
+
+This loop is verified end-to-end (signed receipts, idempotent resend, injected
+duplicates, 401 on bad auth) — see the channel-sim smoke path.
 
 ---
 
