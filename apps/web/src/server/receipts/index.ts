@@ -1,0 +1,1 @@
+export { ingestReceipts } from './ingest';
