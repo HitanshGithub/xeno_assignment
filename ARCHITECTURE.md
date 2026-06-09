@@ -141,12 +141,36 @@ churned — so segmentation demos are reproducible and actually have signal.
 
 ## 4. The AI layer
 
-_Fills in with Phase 5._ AI is woven in at three decision points, never as a
-chat gimmick: (a) **intent → audience** — natural language compiled into an
-editable rule tree; (b) **message drafting** — per-channel, personalised,
-grounded in real customer fields; (c) **insights** — a narrative read of the
-performance stats. A pluggable provider interface backs all three, with a
-deterministic mock so the product runs with zero API keys.
+AI is woven in at the **decision points**, never as a chat gimmick. One
+interface, [`CadenceAi`](./apps/web/src/server/ai/types.ts), exposes four skills:
+
+1. **intent → audience** (`compileSegment`) — natural language becomes an
+   editable rule tree the marketer can see and tweak before it runs.
+2. **message drafting** (`draftMessage`) — per-channel, personalised copy using
+   only the allow-listed placeholders.
+3. **performance narrative** (`summarizePerformance`) — a plain-language read of
+   the funnel a marketer can act on.
+4. **the co-pilot** (`planCampaign`) — a single goal → a complete, reviewable
+   campaign (audience + channel + message). This is the agentic surface.
+
+Two implementations back the interface and are chosen at runtime: an
+**Anthropic** provider (Sonnet for reasoning, Haiku for cheap drafting — a
+conscious cost/latency split) and a **deterministic mock** so the product runs,
+and demos, with zero API keys.
+
+Three design choices that matter:
+
+- **The model can't invent fields.** The shared field catalogue is injected into
+  the prompt; the model is constrained to fields and operators that actually
+  exist and compile.
+- **Output is forced into a typed shape, then re-validated.** The Anthropic
+  provider uses a single-tool `tool_choice` whose `input_schema` is derived from
+  a zod schema, and validates the model's tool input back through that same
+  schema — so a model reply that doesn't fit is a caught error, not a runtime
+  surprise. (Tool-use over the structured-output helper sidesteps a zod major-
+  version coupling, and lets the rule tree stay expressive.)
+- **AI proposes; the human disposes.** Every AI output is rendered as editable
+  structure (rule tree, draft, channel) before anything is sent. No black box.
 
 ---
 

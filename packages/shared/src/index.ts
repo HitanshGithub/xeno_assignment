@@ -4,5 +4,6 @@ export * from './enums';
 export * from './channels';
 export * from './lifecycle';
 export * from './money';
+export * from './templates';
 export * from './segment';
 export * from './contracts';

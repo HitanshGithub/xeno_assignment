@@ -1,14 +1,12 @@
 import type { Brand } from '@cadence/db';
+import { TEMPLATE_VARS, type TemplateVar } from '@cadence/shared';
 
 /**
  * Message personalisation. Templates use {{placeholder}} tokens drawn from a
- * small allow-list — the AI is told to only use these, and rendering simply
- * substitutes per recipient. Unknown tokens are stripped so a bad template can
- * never leak a literal `{{secret}}` to a shopper.
+ * small allow-list (defined in @cadence/shared so the AI, the UI, and this
+ * renderer all agree). Rendering substitutes per recipient; unknown tokens are
+ * stripped so a bad template can never leak a literal `{{secret}}` to a shopper.
  */
-export const TEMPLATE_VARS = ['firstName', 'lastName', 'city', 'brandName'] as const;
-export type TemplateVar = (typeof TEMPLATE_VARS)[number];
-
 const TOKEN = /\{\{\s*(\w+)\s*\}\}/g;
 
 interface RenderSubject {
