@@ -72,10 +72,44 @@ _Fills in with Phase 3._ Design contract:
 
 ## 3. Data model
 
-_Fills in with Phase 1._ Core entities: `Customer`, `Order`/`OrderItem`,
-`Segment` (a stored rule tree + cached preview), `Campaign`, `Communication`
-(one per recipient), and `CommunicationEvent` (the append-only receipt log that
-stats are derived from).
+Postgres via Prisma. Full schema: [`packages/db/prisma/schema.prisma`](./packages/db/prisma/schema.prisma).
+
+```
+Brand (singleton, grounds the AI's tone/products)
+
+Customer ──< Order ──< OrderItem
+   │            │
+   │            └─ attributedCommunicationId ─┐  (which message drove this order)
+   │                                          │
+   └──< Communication >── Campaign >── Segment │
+            │   ▲              (rule-tree definition: Json)
+            │   └─────────────────────────────┘
+            └──< CommunicationEvent   (append-only receipt log)
+```
+
+Three deliberate modelling choices a reviewer should know:
+
+1. **Customer rollups are denormalised.** `orderCount`, `lifetimeValueCents`,
+   `firstOrderAt`, `lastOrderAt`, `avgOrderValueCents` are maintained on order
+   ingestion. Segment evaluation then becomes a single indexed scan over
+   `Customer` instead of a per-customer aggregate over `Order` — the right
+   trade for a read-heavy segmentation workload. The cost (write-time upkeep,
+   possible drift) is bounded because ingestion is the only writer.
+
+2. **`Communication.status` is a projection, not the truth.** The truth is the
+   append-only `CommunicationEvent` log. Status (+ the per-stage timestamps) is
+   a cached read model advanced **monotonically** so a late `delivered` can't
+   overwrite an existing `clicked`. This is what lets the receipt loop be
+   out-of-order and at-least-once without corrupting state.
+
+3. **Money is integer minor units** (`*Cents`, paise) with `currency`
+   alongside — no floats in the data layer. Segments are stored as a **rule
+   tree (`Json`)**, not raw SQL, so the AI's output is inspectable, editable,
+   and safe to compile.
+
+The seed (`packages/db/prisma/seed.ts`) is deterministic and persona-driven —
+loyal regulars, VIPs, lapsed weekly drinkers, new shoppers, one-and-done, and
+churned — so segmentation demos are reproducible and actually have signal.
 
 ---
 

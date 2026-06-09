@@ -1,0 +1,318 @@
+// Cadence data model.
+//
+// Design notes that matter for review:
+//  - Money is stored as integer minor units (e.g. paise) in `*Cents` fields to
+//    avoid floating-point drift; `currency` rides alongside. Formatting lives in
+//    @cadence/shared, never in the DB layer.
+//  - A Communication's `status` is a *projection* of its append-only
+//    CommunicationEvent log. The events are the source of truth; status is a
+//    cached, monotonically-advanced read model so the dashboard stays fast.
+//  - Customer rollups (orderCount, lifetimeValueCents, lastOrderAt, …) are
+//    denormalised on ingestion so segment evaluation is a single indexed scan
+//    rather than a per-customer aggregate.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = []
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Brand — single-tenant for this scope. One seeded row anchors the demo and
+// grounds the AI's tone/product knowledge when drafting messages.
+// ---------------------------------------------------------------------------
+model Brand {
+  id          String   @id @default(cuid())
+  name        String
+  tagline     String?
+  description String?
+  // Free-text voice guidance the AI uses when drafting (e.g. "warm, witty").
+  voice       String?
+  website     String?
+  currency    String   @default("INR")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Customer — a shopper. Contact fields double as channel addresses; the
+// rollup fields are maintained on order ingestion.
+// ---------------------------------------------------------------------------
+model Customer {
+  id         String  @id @default(cuid())
+  // Stable id from the source system; makes ingestion idempotent.
+  externalId String  @unique
+  firstName  String
+  lastName   String?
+  email      String?
+  phone      String?
+  city       String?
+  country    String  @default("IN")
+  // Free-form attribute tags (e.g. "vip", "newsletter", "app-user").
+  tags       String[] @default([])
+
+  // Marketing consent. A shopper with opt-in = false is excluded from sends.
+  marketingOptIn Boolean @default(true)
+
+  // When the shopper first appeared in the system (signup / first seen).
+  signedUpAt DateTime @default(now())
+
+  // --- Denormalised RFM-style rollups (maintained on order ingestion) ------
+  orderCount         Int       @default(0)
+  lifetimeValueCents Int       @default(0)
+  firstOrderAt       DateTime?
+  lastOrderAt        DateTime?
+  // Cents, integer-rounded average order value; 0 when no orders.
+  avgOrderValueCents Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders         Order[]
+  communications Communication[]
+
+  @@index([lastOrderAt])
+  @@index([lifetimeValueCents])
+  @@index([city])
+  @@index([email])
+}
+
+// ---------------------------------------------------------------------------
+// Order + OrderItem — purchase history. `attributedCommunicationId` links an
+// order back to the communication credited with driving it (see attribution).
+// ---------------------------------------------------------------------------
+model Order {
+  id         String   @id @default(cuid())
+  externalId String   @unique
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  orderedAt   DateTime
+  totalCents  Int
+  currency    String      @default("INR")
+  // Where the order came from operationally.
+  channel     OrderSource @default(SEED)
+
+  // Set when this order is credited to a campaign communication.
+  attributedCommunicationId String?        @unique
+  attributedCommunication   Communication? @relation("OrderAttribution", fields: [attributedCommunicationId], references: [id], onDelete: SetNull)
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([orderedAt])
+}
+
+model OrderItem {
+  id             String @id @default(cuid())
+  orderId        String
+  order          Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productName    String
+  category       String
+  sku            String?
+  quantity       Int    @default(1)
+  unitPriceCents Int
+
+  @@index([orderId])
+  @@index([category])
+}
+
+// ---------------------------------------------------------------------------
+// Segment — a named, reusable audience definition. `definition` holds the
+// rule tree (AST) the engine compiles to SQL; it is the auditable, editable
+// artefact the AI produces from natural language.
+// ---------------------------------------------------------------------------
+model Segment {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  source      SegmentSource @default(MANUAL)
+  // The natural-language intent, if AI-authored.
+  prompt      String?
+  // The rule tree: { op: "AND", rules: [...] }. Validated by @cadence/shared.
+  definition  Json
+
+  // Cached preview so the UI can show audience size without re-evaluating.
+  cachedCount Int?
+  cachedAt    DateTime?
+
+  campaigns Campaign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Campaign — one marketing send to a segment over a channel. The message
+// template is snapshotted onto each Communication at launch, so editing a
+// campaign later never rewrites history.
+// ---------------------------------------------------------------------------
+model Campaign {
+  id        String         @id @default(cuid())
+  name      String
+  // The marketer's plain-language brief / goal for this campaign.
+  goal      String?
+  status    CampaignStatus @default(DRAFT)
+  channel   Channel
+
+  segmentId String?
+  segment   Segment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+
+  // Message template with {{placeholders}} resolved per recipient at launch.
+  messageSubject String?
+  messageBody    String
+
+  // Why this audience / channel / message — captured for transparency.
+  aiRationale Json?
+
+  launchedAt  DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  communications Communication[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Communication — one message to one recipient. Holds the rendered snapshot,
+// the lifecycle projection (status + per-stage timestamps), and the link to
+// the raw event log.
+// ---------------------------------------------------------------------------
+model Communication {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  channel   Channel
+  // Resolved address at send time (email / phone), snapshotted.
+  recipient String
+  // Personalised message snapshot actually dispatched.
+  renderedSubject String?
+  renderedBody    String
+
+  // Idempotency for the send hop (CRM -> channel). Unique so a retried launch
+  // never double-sends to the same recipient.
+  idempotencyKey String @unique
+  // Id returned by the channel service; correlates receipts back to us.
+  providerMessageId String?
+
+  // --- Lifecycle projection (derived from events, advanced monotonically) ---
+  status       CommunicationStatus @default(QUEUED)
+  failureReason String?
+
+  queuedAt    DateTime  @default(now())
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  readAt      DateTime?
+  clickedAt   DateTime?
+  convertedAt DateTime?
+  failedAt    DateTime?
+
+  events           CommunicationEvent[]
+  attributedOrders Order[]              @relation("OrderAttribution")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignId])
+  @@index([customerId])
+  @@index([status])
+  @@index([providerMessageId])
+}
+
+// ---------------------------------------------------------------------------
+// CommunicationEvent — append-only receipt log. The source of truth for stats.
+// `dedupeKey` makes ingestion idempotent under at-least-once callback delivery.
+// ---------------------------------------------------------------------------
+model CommunicationEvent {
+  id              String        @id @default(cuid())
+  communicationId String
+  communication   Communication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
+
+  type EventType
+  // When the channel says it happened (may be out of order vs receivedAt).
+  occurredAt DateTime
+  // When the CRM ingested the receipt.
+  receivedAt DateTime @default(now())
+
+  // Provider event id — unique so duplicate callbacks are no-ops.
+  dedupeKey String @unique
+  // Extra payload: failure reason, clicked url, device, simulated order, ...
+  metadata  Json?
+
+  @@index([communicationId])
+  @@index([type])
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+enum Channel {
+  WHATSAPP
+  SMS
+  EMAIL
+  RCS
+}
+
+enum OrderSource {
+  SEED
+  IMPORT
+  CAMPAIGN_ATTRIBUTED
+}
+
+enum SegmentSource {
+  MANUAL
+  AI
+}
+
+enum CampaignStatus {
+  DRAFT
+  LAUNCHING
+  RUNNING
+  COMPLETED
+  CANCELLED
+}
+
+// Projected current state of a communication. FAILED / BOUNCED are terminal
+// off-track states; the rest form the ordered happy path (per-channel rank is
+// applied in the projection logic, since e.g. SMS has no OPENED/READ).
+enum CommunicationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  OPENED
+  READ
+  CLICKED
+  CONVERTED
+  FAILED
+  BOUNCED
+}
+
+// Event types the channel may report back. Superset of statuses; UNSUBSCRIBED
+// is a side-effect event that flips the customer's consent rather than the
+// communication's main lifecycle.
+enum EventType {
+  QUEUED
+  SENT
+  DELIVERED
+  OPENED
+  READ
+  CLICKED
+  CONVERTED
+  FAILED
+  BOUNCED
+  UNSUBSCRIBED
+}
