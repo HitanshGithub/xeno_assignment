@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cadence — Architecture Graph</title>
+    <style>
+      :root {
+        --canvas: #100e0c;
+        --surface: #1a1613;
+        --surface2: #221d18;
+        --border: #312b22;
+        --ink: #f3eee4;
+        --muted: #a99f8d;
+        --faint: #6f685a;
+        --brand: #e0975a;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background-image:
+          radial-gradient(900px 500px at 12% -10%, rgba(224, 151, 90, 0.08), transparent 70%),
+          radial-gradient(700px 500px at 100% 0%, rgba(107, 191, 148, 0.05), transparent 60%);
+        overflow: hidden;
+      }
+      header {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 20px; border-bottom: 1px solid var(--border);
+        background: rgba(16, 14, 12, 0.7); backdrop-filter: blur(8px);
+      }
+      .logo { width: 34px; height: 34px; border-radius: 10px; background: var(--brand);
+        color: #2a1a0a; display: grid; place-items: center; font-size: 18px; }
+      h1 { font-size: 17px; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+      header p { margin: 0; color: var(--muted); font-size: 12.5px; }
+      .spacer { flex: 1; }
+      .hint { color: var(--faint); font-size: 12px; }
+      button.reset {
+        background: var(--surface2); color: var(--ink); border: 1px solid var(--border);
+        border-radius: 8px; padding: 6px 12px; font-size: 12.5px; cursor: pointer;
+      }
+      button.reset:hover { border-color: var(--brand); }
+      svg { display: block; width: 100vw; height: 100vh; cursor: grab; }
+      svg.panning { cursor: grabbing; }
+      .link { stroke: #4a4234; stroke-width: 1.3; opacity: 0.55; }
+      .link.http { stroke: var(--brand); stroke-width: 2; opacity: 0.9; stroke-dasharray: 6 5; animation: flow 0.7s linear infinite; }
+      .link.data { stroke: #6bbf94; stroke-dasharray: 2 3; opacity: 0.6; }
+      .link.dim { opacity: 0.07 !important; animation: none; }
+      @keyframes flow { to { stroke-dashoffset: -22; } }
+      .node circle { stroke: #00000055; stroke-width: 1.5; cursor: pointer; transition: filter 0.15s; }
+      .node text { font-size: 11px; fill: var(--ink); pointer-events: none; paint-order: stroke;
+        stroke: #100e0c; stroke-width: 3px; stroke-linejoin: round; }
+      .node.dim circle { opacity: 0.2; }
+      .node.dim text { opacity: 0.15; }
+      .node.hot circle { filter: drop-shadow(0 0 6px currentColor); }
+      .legend {
+        position: fixed; left: 18px; bottom: 18px; z-index: 5;
+        background: rgba(26, 22, 19, 0.85); border: 1px solid var(--border);
+        border-radius: 12px; padding: 12px 14px; font-size: 12px; backdrop-filter: blur(8px);
+        max-width: 230px;
+      }
+      .legend h4 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--faint); }
+      .legend .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: var(--muted); }
+      .legend .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+      .legend .edge { width: 18px; height: 0; border-top-width: 2px; border-top-style: solid; flex: none; }
+      .legend hr { border: none; border-top: 1px solid var(--border); margin: 9px 0; }
+      #tip {
+        position: fixed; z-index: 9; pointer-events: none; opacity: 0;
+        max-width: 280px; background: var(--surface2); border: 1px solid #423a2e;
+        border-radius: 10px; padding: 9px 11px; font-size: 12.5px; transition: opacity 0.1s;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      }
+      #tip .t { font-weight: 600; margin-bottom: 2px; }
+      #tip .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+      #tip .d { color: var(--muted); margin-top: 3px; line-height: 1.35; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">☕</div>
+      <div>
+        <h1>Cadence — Architecture Graph</h1>
+        <p>AI-native mini CRM · 4 workspaces · the two amber edges are the async send ⇄ receipt loop</p>
+      </div>
+      <div class="spacer"></div>
+      <span class="hint">drag nodes · scroll to zoom · drag background to pan · hover for detail</span>
+      <button class="reset" id="reset">Reset view</button>
+    </header>
+
+    <svg id="svg"></svg>
+
+    <div class="legend">
+      <h4>Layers</h4>
+      <div id="legend-layers"></div>
+      <hr />
+      <h4>Edges</h4>
+      <div class="row"><span class="edge" style="border-color:#4a4234"></span> import / depends on</div>
+      <div class="row"><span class="edge" style="border-color:#e0975a"></span> HTTP call</div>
+      <div class="row"><span class="edge" style="border-color:#6bbf94"></span> data / persistence</div>
+    </div>
+
+    <div id="tip"></div>
+
+    <script>
+      const LAYERS = {
+        frontend: { color: '#6ea8d8', label: 'Frontend (UI)', col: 0 },
+        api: { color: '#e0975a', label: 'CRM API routes', col: 1 },
+        domain: { color: '#d4a45f', label: 'Domain (server)', col: 2 },
+        ai: { color: '#bd8bd6', label: 'AI layer', col: 2 },
+        shared: { color: '#8a93a6', label: 'Shared contracts', col: 3 },
+        data: { color: '#6bbf94', label: 'Data (Prisma/PG)', col: 4 },
+        channel: { color: '#e07a5f', label: 'Channel service', col: 3 },
+        external: { color: '#b0b6c2', label: 'External', col: 4 },
+      };
+
+      const NODES = [
+        ['ui_pages','UI Pages','frontend','Co-pilot, dashboard, campaigns, segments, customers'],
+        ['ui_comp','Components','frontend','Funnel · RuleView · AudiencePreview · badges · UI kit'],
+        ['ui_lib','Client lib','frontend','Typed api client + useApi polling hook'],
+
+        ['api_ai','/api/ai/*','api','plan · segment · draft — the co-pilot endpoints'],
+        ['api_camp','/api/campaigns/*','api','CRUD · launch · stats · insight'],
+        ['api_seg','/api/segments/*','api','CRUD · live audience preview'],
+        ['api_recv','/api/receipts','api','Channel callback — reads raw body, verifies HMAC'],
+        ['api_misc','/api/{dashboard,meta,customers,ingest,health}','api','Dashboard, builder metadata, customers, ingestion, health'],
+
+        ['d_seg','segments','domain','compiler (rule tree → parameterised SQL) · evaluate · describe · service'],
+        ['d_camp','campaigns','domain','launch orchestration · render · propensity · service'],
+        ['d_recv','receipts','domain','idempotent ingest · monotonic status projection · attribution'],
+        ['d_ins','insights','domain','funnel + attributed revenue + dashboard stats'],
+        ['d_ing','ingestion','domain','customers + orders upsert · RFM rollups'],
+        ['d_chc','channel client','domain','CRM → channel send hop (validated, Bearer auth)'],
+        ['d_brand','brand','domain','brand config — grounds the AI'],
+        ['d_env','env','domain','typed server config + AI provider resolution'],
+
+        ['ai_core','CadenceAi','ai','the AI interface + runtime provider factory'],
+        ['ai_anth','Anthropic','ai','Claude Sonnet (reasoning) + Haiku (drafting) via tool-use + zod'],
+        ['ai_mock','Mock','ai','deterministic, key-free fallback'],
+
+        ['shared','@cadence/shared','shared','enums · channels · lifecycle · money · rule-tree AST · contracts'],
+        ['shared_srv','shared/server','shared','HMAC sign / verify (server-only)'],
+
+        ['db','@cadence/db','data','Prisma client (singleton)'],
+        ['prisma','Prisma schema + seed','data','8 models · 480-customer persona seed'],
+        ['pg','Postgres','data','the database'],
+
+        ['ch_send','/v1/send','channel','Express · Bearer auth · idempotent accept'],
+        ['ch_disp','dispatcher','channel','schedules + HMAC-signs receipts · injects duplicates'],
+        ['ch_sim','simulator','channel','probabilistic per-channel lifecycle state machine'],
+        ['ch_queue','RetryQueue','channel','bounded concurrency · backoff · dead-letter'],
+
+        ['anthropic','Claude API','external','Anthropic'],
+      ];
+
+      const LINKS = [
+        ['ui_pages','ui_comp','dep'], ['ui_pages','ui_lib','dep'],
+        ['ui_lib','api_ai','http'], ['ui_lib','api_camp','http'], ['ui_lib','api_seg','http'], ['ui_lib','api_misc','http'],
+
+        ['api_ai','ai_core','dep'], ['api_ai','d_seg','dep'], ['api_ai','d_brand','dep'],
+        ['api_camp','d_camp','dep'], ['api_camp','d_ins','dep'], ['api_camp','ai_core','dep'],
+        ['api_seg','d_seg','dep'],
+        ['api_recv','d_recv','dep'], ['api_recv','shared_srv','dep'],
+        ['api_misc','d_ins','dep'], ['api_misc','d_ing','dep'], ['api_misc','db','dep'],
+
+        ['d_seg','shared','dep'], ['d_seg','db','dep'],
+        ['d_camp','d_seg','dep'], ['d_camp','d_chc','dep'], ['d_camp','d_brand','dep'], ['d_camp','db','dep'], ['d_camp','shared','dep'],
+        ['d_recv','db','dep'], ['d_recv','d_ing','dep'], ['d_recv','shared','dep'],
+        ['d_ins','db','dep'], ['d_ing','db','dep'], ['d_brand','db','dep'],
+        ['d_chc','shared','dep'], ['d_chc','ch_send','http'],
+
+        ['ai_core','ai_anth','dep'], ['ai_core','ai_mock','dep'], ['ai_core','d_env','dep'],
+        ['ai_anth','shared','dep'], ['ai_anth','anthropic','http'], ['ai_mock','shared','dep'],
+
+        ['db','prisma','dep'], ['prisma','pg','data'], ['db','pg','data'],
+
+        ['ch_send','ch_disp','dep'], ['ch_send','shared','dep'], ['ch_send','shared_srv','dep'],
+        ['ch_disp','ch_sim','dep'], ['ch_disp','ch_queue','dep'], ['ch_disp','shared_srv','dep'],
+        ['ch_disp','api_recv','http'],
+      ];
+
+      // --- build graph state ---
+      const svg = document.getElementById('svg');
+      const SVGNS = 'http://www.w3.org/2000/svg';
+      let W = window.innerWidth, H = window.innerHeight;
+      const node = {};
+      NODES.forEach(([id, label, layer, desc], i) => {
+        const col = LAYERS[layer].col;
+        node[id] = {
+          id, label, layer, desc,
+          x: 120 + col * (W - 260) / 4 + (Math.random() - 0.5) * 60,
+          y: H / 2 + (Math.random() - 0.5) * (H - 220),
+          vx: 0, vy: 0, fixed: false,
+          r: id === 'pg' || id === 'anthropic' || id.startsWith('shared') ? 9 : (id.startsWith('ui') || id.startsWith('api') ? 11 : 12),
+        };
+      });
+      const links = LINKS.map(([s, t, kind]) => ({ s: node[s], t: node[t], kind }));
+      const adj = {};
+      NODES.forEach(([id]) => (adj[id] = new Set()));
+      links.forEach((l) => { adj[l.s.id].add(l.t.id); adj[l.t.id].add(l.s.id); });
+
+      // --- render skeleton (zoom/pan group) ---
+      const root = document.createElementNS(SVGNS, 'g');
+      svg.appendChild(root);
+      const defs = document.createElementNS(SVGNS, 'defs');
+      defs.innerHTML =
+        '<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5a5142"/></marker>' +
+        '<marker id="arrowH" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e0975a"/></marker>';
+      svg.appendChild(defs);
+
+      const linkEls = links.map((l) => {
+        const el = document.createElementNS(SVGNS, 'line');
+        el.setAttribute('class', 'link ' + l.kind);
+        el.setAttribute('marker-end', l.kind === 'http' ? 'url(#arrowH)' : 'url(#arrow)');
+        root.appendChild(el);
+        l.el = el;
+        return el;
+      });
+
+      const nodeEls = NODES.map(([id]) => {
+        const n = node[id];
+        const g = document.createElementNS(SVGNS, 'g');
+        g.setAttribute('class', 'node');
+        const c = document.createElementNS(SVGNS, 'circle');
+        c.setAttribute('r', n.r);
+        c.setAttribute('fill', LAYERS[n.layer].color);
+        c.style.color = LAYERS[n.layer].color;
+        const t = document.createElementNS(SVGNS, 'text');
+        t.setAttribute('x', n.r + 5);
+        t.setAttribute('y', 4);
+        t.textContent = n.label;
+        g.append(c, t);
+        root.appendChild(g);
+        n.g = g; n.c = c;
+        wireNode(n);
+        return g;
+      });
+
+      // --- force simulation ---
+      let alpha = 1;
+      function tick() {
+        const colX = (col) => 120 + col * (W - 260) / 4;
+        // repulsion
+        for (let i = 0; i < NODES.length; i++) {
+          const a = node[NODES[i][0]];
+          for (let j = i + 1; j < NODES.length; j++) {
+            const b = node[NODES[j][0]];
+            let dx = a.x - b.x, dy = a.y - b.y;
+            let d2 = dx * dx + dy * dy || 0.01;
+            const f = (4200 * alpha) / d2;
+            const d = Math.sqrt(d2);
+            const fx = (dx / d) * f, fy = (dy / d) * f;
+            a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+          }
+        }
+        // springs
+        for (const l of links) {
+          let dx = l.t.x - l.s.x, dy = l.t.y - l.s.y;
+          const d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+          const f = ((d - 95) / d) * 0.06 * alpha;
+          const fx = dx * f, fy = dy * f;
+          l.s.vx += fx; l.s.vy += fy; l.t.vx -= fx; l.t.vy -= fy;
+        }
+        // layer x-anchor + vertical centering keep the left→right structure readable
+        for (const [id] of NODES) {
+          const n = node[id];
+          n.vx += (colX(LAYERS[n.layer].col) - n.x) * 0.03 * alpha;
+          n.vy += (H / 2 - n.y) * 0.006 * alpha;
+        }
+        // integrate
+        for (const [id] of NODES) {
+          const n = node[id];
+          if (n.fixed) { n.vx = 0; n.vy = 0; continue; }
+          n.x += Math.max(-12, Math.min(12, n.vx));
+          n.y += Math.max(-12, Math.min(12, n.vy));
+          n.x = Math.max(70, Math.min(W - 70, n.x));
+          n.y = Math.max(80, Math.min(H - 40, n.y));
+          n.vx *= 0.82; n.vy *= 0.82;
+        }
+        if (alpha > 0.02) alpha *= 0.99;
+        draw();
+        requestAnimationFrame(tick);
+      }
+      function draw() {
+        for (const l of links) {
+          l.el.setAttribute('x1', l.s.x); l.el.setAttribute('y1', l.s.y);
+          l.el.setAttribute('x2', l.t.x); l.el.setAttribute('y2', l.t.y);
+        }
+        for (const [id] of NODES) {
+          const n = node[id];
+          n.g.setAttribute('transform', `translate(${n.x},${n.y})`);
+        }
+      }
+
+      // --- interaction: zoom / pan ---
+      let scale = 1, tx = 0, ty = 0;
+      function applyView() { root.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`); }
+      svg.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const f = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+        const ns = Math.max(0.4, Math.min(2.5, scale * f));
+        tx = e.clientX - (e.clientX - tx) * (ns / scale);
+        ty = e.clientY - (e.clientY - ty) * (ns / scale);
+        scale = ns; applyView();
+      }, { passive: false });
+
+      let panning = false, panStart = null;
+      svg.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('.node')) return;
+        panning = true; svg.classList.add('panning');
+        panStart = { x: e.clientX - tx, y: e.clientY - ty };
+      });
+      window.addEventListener('pointermove', (e) => {
+        if (panning) { tx = e.clientX - panStart.x; ty = e.clientY - panStart.y; applyView(); }
+      });
+      window.addEventListener('pointerup', () => { panning = false; svg.classList.remove('panning'); });
+
+      // --- node drag + hover ---
+      const tip = document.getElementById('tip');
+      function toGraph(e) { return { x: (e.clientX - tx) / scale, y: (e.clientY - ty) / scale }; }
+      function wireNode(n) {
+        let dragging = false;
+        n.g.addEventListener('pointerdown', (e) => {
+          e.stopPropagation(); dragging = true; n.fixed = true;
+          n.g.setPointerCapture(e.pointerId); alpha = Math.max(alpha, 0.4);
+        });
+        n.g.addEventListener('pointermove', (e) => {
+          if (!dragging) return;
+          const p = toGraph(e); n.x = p.x; n.y = p.y; n.vx = n.vy = 0;
+        });
+        n.g.addEventListener('pointerup', (e) => { dragging = false; n.fixed = false; n.g.releasePointerCapture(e.pointerId); });
+        n.g.addEventListener('pointerenter', (e) => highlight(n, e));
+        n.g.addEventListener('pointermove', (e) => { if (!dragging) moveTip(e); });
+        n.g.addEventListener('pointerleave', () => clearHighlight());
+      }
+      function highlight(n, e) {
+        const keep = new Set([n.id, ...adj[n.id]]);
+        for (const [id] of NODES) node[id].g.classList.toggle('dim', !keep.has(id));
+        node[n.id].g.classList.add('hot');
+        for (const l of links) l.el.classList.toggle('dim', !(l.s.id === n.id || l.t.id === n.id));
+        tip.innerHTML =
+          `<div class="t">${n.label}</div>` +
+          `<div class="l" style="color:${LAYERS[n.layer].color}">${LAYERS[n.layer].label}</div>` +
+          `<div class="d">${n.desc}</div>`;
+        tip.style.opacity = 1; moveTip(e);
+      }
+      function moveTip(e) {
+        const pad = 16, w = 290;
+        let x = e.clientX + pad; if (x + w > window.innerWidth) x = e.clientX - w - pad;
+        tip.style.left = x + 'px'; tip.style.top = e.clientY + pad + 'px';
+      }
+      function clearHighlight() {
+        for (const [id] of NODES) node[id].g.classList.remove('dim', 'hot');
+        for (const l of links) l.el.classList.remove('dim');
+        tip.style.opacity = 0;
+      }
+
+      // --- legend + reset + resize ---
+      const ll = document.getElementById('legend-layers');
+      const seen = new Set();
+      for (const [, , layer] of NODES) {
+        if (seen.has(layer)) continue; seen.add(layer);
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `<span class="dot" style="background:${LAYERS[layer].color}"></span>${LAYERS[layer].label}`;
+        ll.appendChild(row);
+      }
+      document.getElementById('reset').addEventListener('click', () => {
+        scale = 1; tx = 0; ty = 0; applyView(); alpha = 0.8;
+      });
+      window.addEventListener('resize', () => { W = window.innerWidth; H = window.innerHeight; });
+
+      applyView();
+      requestAnimationFrame(tick);
+    </script>
+  </body>
+</html>
