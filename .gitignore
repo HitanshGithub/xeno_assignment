@@ -3,6 +3,12 @@ node_modules/
 .pnp
 .pnp.js
 
+# Lockfile intentionally not committed: it was generated on Windows, and npm
+# then skips platform-specific native binaries (lightningcss / @tailwindcss
+# oxide) when installing on Linux (Vercel/Render/Docker), breaking the build.
+# Letting each environment resolve fresh fetches the correct binaries.
+package-lock.json
+
 # Build output
 dist/
 build/
