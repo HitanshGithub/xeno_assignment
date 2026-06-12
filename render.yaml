@@ -5,14 +5,18 @@
 # Deploy: New + → Blueprint → point at this repo. Render reads this file.
 # Render injects PORT automatically; the service reads it (see config.ts).
 #
-# After both are up, set the three sync:false vars below to the SAME secrets you
-# put in Vercel, and CRM_BASE_URL to your Vercel app URL. See DEPLOY.md.
+# After it's up, set the two sync:false secrets below to the SAME values you put
+# in Vercel (CHANNEL_SERVICE_API_KEY + CHANNEL_CALLBACK_SECRET). See DEPLOY.md.
+# (The channel learns the CRM callback URL from each send request, so it does
+# not need CRM_BASE_URL of its own.)
 services:
   - type: web
     name: cadence-channel
     runtime: node
     plan: free
-    buildCommand: npm install
+    # --include=dev so tsx (the channel's runtime) installs even if the host
+    # defaults NODE_ENV to production.
+    buildCommand: npm install --include=dev
     startCommand: npm run start -w @cadence/channel-sim
     healthCheckPath: /health
     autoDeploy: true
@@ -25,7 +29,4 @@ services:
       - key: CHANNEL_SERVICE_API_KEY
         sync: false
       - key: CHANNEL_CALLBACK_SECRET
-        sync: false
-      # Your deployed CRM (Vercel) URL, e.g. https://cadence.vercel.app
-      - key: CRM_BASE_URL
         sync: false
