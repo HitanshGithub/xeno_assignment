@@ -128,7 +128,7 @@ export interface PlanCampaignInput {
  * present. The rest of the app depends only on this interface.
  */
 export interface CadenceAi {
-  readonly provider: 'anthropic' | 'mock';
+  readonly provider: 'anthropic' | 'gemini' | 'mock';
   compileSegment(input: CompileSegmentInput): Promise<SegmentPlan>;
   draftMessage(input: DraftMessageInput): Promise<MessageDraft>;
   summarizePerformance(input: InsightInput): Promise<PerformanceInsight>;

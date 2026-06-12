@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
+    "@google/genai": "^2.8.0",
     "@cadence/db": "*",
     "@cadence/shared": "*",
     "clsx": "^2.1.1",

@@ -14,18 +14,30 @@ const schema = z.object({
   CHANNEL_CALLBACK_SECRET: z.string().min(1).default('dev-callback-secret-change-me'),
 
   // AI provider.
-  AI_PROVIDER: z.enum(['auto', 'anthropic', 'mock']).default('auto'),
+  AI_PROVIDER: z.enum(['auto', 'anthropic', 'gemini', 'mock']).default('auto'),
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_MODEL_REASONING: z.string().default('claude-sonnet-4-6'),
   AI_MODEL_DRAFT: z.string().default('claude-haiku-4-5-20251001'),
+  // Google Gemini (free-tier friendly). One model is used for every skill.
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
 });
 
 export const env = schema.parse(process.env);
 
-/** Resolved AI mode: 'anthropic' only when a key is actually present. */
-export function resolvedAiProvider(): 'anthropic' | 'mock' {
+export type AiMode = 'anthropic' | 'gemini' | 'mock';
+
+/**
+ * Resolved AI mode. A real provider is only used when its key is present;
+ * otherwise the deterministic mock keeps the product working for free.
+ * `auto` prefers Anthropic, then Gemini, then mock.
+ */
+export function resolvedAiProvider(): AiMode {
   if (env.AI_PROVIDER === 'mock') return 'mock';
   if (env.AI_PROVIDER === 'anthropic') return 'anthropic';
+  if (env.AI_PROVIDER === 'gemini') return env.GEMINI_API_KEY ? 'gemini' : 'mock';
   // auto
-  return env.ANTHROPIC_API_KEY ? 'anthropic' : 'mock';
+  if (env.ANTHROPIC_API_KEY) return 'anthropic';
+  if (env.GEMINI_API_KEY) return 'gemini';
+  return 'mock';
 }
