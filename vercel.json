@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "npm install",
+  "installCommand": "rm -f package-lock.json && npm install",
   "buildCommand": "npm run db:generate && npm run build -w @cadence/web",
   "outputDirectory": "apps/web/.next"
 }
