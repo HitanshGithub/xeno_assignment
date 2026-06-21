@@ -1,0 +1,164 @@
+# Autonomous issue solver.
+#
+# Works EVERY open issue by default: picks one, lets Claude Code implement a fix
+# on a fresh branch, and opens a Pull Request that closes it. A human still
+# reviews and merges — the agent proposes, you dispose.
+#
+# Opt OUT of an issue by adding any of these labels: `claude:ignore`, `wontfix`,
+# `blocked`, `question`. State is tracked with `claude:wip` (working now) and
+# `claude:pr-open` (a PR was opened) so the same issue is never picked twice.
+#
+# Triggers:
+#   - issues:opened/reopened → the moment any issue is filed/reopened
+#   - schedule               → every 6h, grabs the oldest un-started open issue
+#   - workflow_dispatch      → run on demand for a specific issue number
+#
+# Required repo setup (see .github/CLAUDE_AUTOMATION.md):
+#   - Secret  CLAUDE_CODE_OAUTH_TOKEN  (from `claude setup-token`)
+#   - Settings → Actions → General → Workflow permissions:
+#       "Read and write" + "Allow GitHub Actions to create and approve PRs"
+name: Claude Issue Solver
+
+on:
+  issues:
+    types: [opened, reopened]
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to solve'
+        required: true
+        type: number
+
+# Never let two runs fight over the same issue.
+concurrency:
+  group: claude-issue-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write # create/push the branch
+  pull-requests: write # open the PR
+  issues: write # labels + status comments
+
+jobs:
+  solve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      # Any of these labels excludes an issue from auto-resolution.
+      SKIP_LABELS: '["claude:wip","claude:pr-open","claude:ignore","wontfix","blocked","question"]'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure workflow labels exist
+        run: |
+          gh label create "claude:wip"     --color fbca04 --description "Claude is working on this" 2>/dev/null || true
+          gh label create "claude:pr-open" --color 0e8a16 --description "Claude opened a PR"        2>/dev/null || true
+          gh label create "claude:ignore"  --color b60205 --description "Do not auto-resolve this"  2>/dev/null || true
+
+      # Decide which issue to work. Outputs `number` ('' means nothing to do).
+      # Only the validated integer issue number is ever passed downstream — the
+      # issue title/body are NEVER interpolated into a shell or the prompt, so a
+      # malicious issue can't inject commands (Claude fetches them itself, sandboxed).
+      - name: Pick issue
+        id: pick
+        run: |
+          set -euo pipefail
+          case "${{ github.event_name }}" in
+            workflow_dispatch) NUM="${{ inputs.issue_number }}" ;;
+            issues)            NUM="${{ github.event.issue.number }}" ;;
+            schedule)
+              # Oldest open issue carrying NO skip-label and with nobody assigned.
+              NUM=$(gh issue list --repo "$REPO" --state open \
+                      --json number,labels,assignees --limit 100 \
+                    | jq -r --argjson skip "$SKIP_LABELS" '
+                        [ .[]
+                          | select(([.labels[].name] - $skip) == [.labels[].name])
+                          | select(.assignees | length == 0)
+                        ] | sort_by(.number) | .[0].number // ""')
+              ;;
+            *) NUM="" ;;
+          esac
+
+          # Validate it's an integer and still actionable (open, no skip-label).
+          if ! [[ "$NUM" =~ ^[0-9]+$ ]]; then
+            echo "No actionable issue found."; echo "number=" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          INFO=$(gh issue view "$NUM" --repo "$REPO" --json state,labels || echo '{}')
+          BAD=$(echo "$INFO" | jq -r --argjson skip "$SKIP_LABELS" \
+                  '(.state != "OPEN") or (([.labels[].name] - $skip) != [.labels[].name])')
+          if [[ "$BAD" != "false" ]]; then
+            echo "Issue #$NUM is not actionable (closed, or carries a skip label)."
+            echo "number=" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "Selected issue #$NUM"
+          echo "number=$NUM" >> "$GITHUB_OUTPUT"
+
+      - name: Claim the issue
+        if: steps.pick.outputs.number != ''
+        run: |
+          gh issue edit "${{ steps.pick.outputs.number }}" --add-label "claude:wip"
+          gh issue comment "${{ steps.pick.outputs.number }}" \
+            --body "🤖 Claude Code picked this up — working on a fix on a new branch. A PR will follow. [Run]($GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID)."
+
+      - name: Solve with Claude Code
+        id: claude
+        if: steps.pick.outputs.number != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Subscription auth (Pro/Max) — generated with `claude setup-token`.
+          # To use a pay-as-you-go API key instead, swap this line for:
+          #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          # Broad enough to edit code, run the toolchain, and use git/gh.
+          claude_args: '--max-turns 40 --allowedTools "Bash,Edit,Write,Read,Glob,Grep"'
+          # Only the sanitized integer is interpolated here.
+          prompt: |
+            You are an autonomous software engineer resolving a GitHub issue in this repository.
+            Repository: ${{ github.repository }}
+            Target issue: #${{ steps.pick.outputs.number }}
+
+            Work in this exact order:
+            1. Run `gh issue view ${{ steps.pick.outputs.number }}` to read the full issue.
+            2. Create a new branch off the default branch named
+               `claude/issue-${{ steps.pick.outputs.number }}-<short-kebab-slug>`.
+            3. Explore the codebase, then implement the SMALLEST correct change that
+               resolves the issue. Match the existing code style, naming, and structure.
+            4. Run the project's checks if they exist (e.g. `npm ci` then
+               `npm run typecheck`, plus any test/build/lint script). Make them pass.
+            5. Commit with a clear message. End the commit body with:
+               `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
+            6. Push the branch and open a PR with `gh pr create` against the default
+               branch. The PR body MUST contain `Closes #${{ steps.pick.outputs.number }}`,
+               a short summary of the change, and exactly how you verified it.
+            7. If you cannot complete a confident fix, open a DRAFT PR (`gh pr create --draft`)
+               that explains what is blocking you and what you tried — never leave silently.
+
+            Hard rules:
+            - Keep the change scoped to this one issue. Do NOT refactor unrelated code.
+            - NEVER modify anything under `.github/workflows/`.
+            - Do not commit secrets, `.env` files, or `node_modules`.
+            - Report failures honestly in the PR body; do not claim something works if a check failed.
+
+      # On success the issue is "handed off" to its PR: tag it `claude:pr-open`
+      # (a skip-label) so it is never picked again, and drop the WIP lock.
+      - name: Mark handed off
+        if: success() && steps.pick.outputs.number != ''
+        run: |
+          gh issue edit "${{ steps.pick.outputs.number }}" \
+            --remove-label "claude:wip" --add-label "claude:pr-open" || true
+
+      # On failure, release the WIP lock so a later run (or a human) can retry.
+      - name: Release on failure
+        if: failure() && steps.pick.outputs.number != ''
+        run: |
+          gh issue edit "${{ steps.pick.outputs.number }}" --remove-label "claude:wip" || true
+          gh issue comment "${{ steps.pick.outputs.number }}" \
+            --body "⚠️ Claude's run didn't complete — the \`claude:wip\` lock was released. See the [Actions log]($GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID). It will retry on the next schedule, or add the \`claude:ignore\` label to stop."
