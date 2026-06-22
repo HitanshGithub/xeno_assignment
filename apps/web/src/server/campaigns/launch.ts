@@ -34,11 +34,18 @@ export async function launchCampaign(campaignId: string): Promise<LaunchResult> 
     include: { segment: true },
   });
 
-  if (campaign.status !== 'DRAFT') {
-    throw new LaunchError(`campaign is ${campaign.status}, only DRAFT can be launched`);
-  }
   if (!campaign.segment) {
     throw new LaunchError('campaign has no segment to target');
+  }
+
+  // Atomic guard: exactly one concurrent caller can win the DRAFT → LAUNCHING
+  // transition. Any racing caller gets count=0 and bails without doing work.
+  const { count } = await prisma.campaign.updateMany({
+    where: { id: campaignId, status: 'DRAFT' },
+    data: { status: 'LAUNCHING', launchedAt: new Date() },
+  });
+  if (count === 0) {
+    throw new LaunchError(`campaign is ${campaign.status}, only DRAFT can be launched`);
   }
 
   const definition = segmentDefinitionSchema.parse(campaign.segment.definition);
@@ -49,11 +56,6 @@ export async function launchCampaign(campaignId: string): Promise<LaunchResult> 
 
   const brand = await getBrand();
   const useEmail = channelUsesEmail(campaign.channel);
-
-  await prisma.campaign.update({
-    where: { id: campaignId },
-    data: { status: 'LAUNCHING', launchedAt: new Date() },
-  });
 
   // 2) Snapshot communications (idempotent on key).
   const commRows = recipients.map((r) => {
