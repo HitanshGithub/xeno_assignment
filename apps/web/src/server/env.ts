@@ -34,7 +34,7 @@ export type AiMode = 'anthropic' | 'gemini' | 'mock';
  */
 export function resolvedAiProvider(): AiMode {
   if (env.AI_PROVIDER === 'mock') return 'mock';
-  if (env.AI_PROVIDER === 'anthropic') return 'anthropic';
+  if (env.AI_PROVIDER === 'anthropic') return env.ANTHROPIC_API_KEY ? 'anthropic' : 'mock';
   if (env.AI_PROVIDER === 'gemini') return env.GEMINI_API_KEY ? 'gemini' : 'mock';
   // auto
   if (env.ANTHROPIC_API_KEY) return 'anthropic';
