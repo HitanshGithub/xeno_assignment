@@ -58,3 +58,13 @@ export async function updateCampaign(id: string, patch: Partial<CampaignInput>):
 export function deleteCampaign(id: string): Promise<Campaign> {
   return prisma.campaign.delete({ where: { id } });
 }
+
+export class CancelError extends Error {}
+
+export async function cancelCampaign(id: string): Promise<Campaign> {
+  const campaign = await prisma.campaign.findUniqueOrThrow({ where: { id } });
+  if (campaign.status === 'COMPLETED' || campaign.status === 'CANCELLED') {
+    throw new CancelError(`cannot cancel a campaign with status ${campaign.status}`);
+  }
+  return prisma.campaign.update({ where: { id }, data: { status: 'CANCELLED' } });
+}

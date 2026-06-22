@@ -4,6 +4,8 @@ export {
   getCampaign,
   updateCampaign,
   deleteCampaign,
+  cancelCampaign,
+  CancelError,
   type CampaignInput,
 } from './service';
 export { launchCampaign, LaunchError, type LaunchResult } from './launch';
