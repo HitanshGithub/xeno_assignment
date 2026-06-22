@@ -27,7 +27,9 @@ export function buildVars(customer: RenderSubject, brand: Brand): Record<Templat
 export function renderTemplate(template: string, vars: Record<string, string>): string {
   return template
     .replace(TOKEN, (_match, key: string) => vars[key] ?? '')
-    .replace(/\s{2,}/g, ' ')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]{2,}/g, ' ').trim())
+    .join('\n')
     .trim();
 }
 
