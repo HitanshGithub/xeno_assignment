@@ -5,7 +5,7 @@
 > Describe the goal. Cadence finds the audience, writes the message, picks the
 > channel, sends it, and tells you what actually worked.
 
-Cadence is a mini CRM in the spirit of [Xeno](https://xeno.in) — built for a
+Cadence is a mini CRM  — built for a
 D2C / retail marketer who wants to _reach the right shoppers_, not manage a
 sales pipeline. You talk to it in plain language ("win back the lapsed weekly
 latte drinkers"); it compiles that intent into a **transparent, auditable
