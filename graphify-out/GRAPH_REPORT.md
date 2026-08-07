@@ -22,7 +22,7 @@ describes a goal in plain language; the product compiles a transparent, editable
 | HTTP API routes | 17 |
 | UI pages | 6 |
 | Cross-package imports | `@cadence/shared` ×35 · `@cadence/db` ×15 · `@cadence/shared/server` ×6 |
-| Repo | https://github.com/HitanshGithub/xeno_assignment |
+| Repo | https://github.com/HitanshGithub/Cadence_CRM |
 
 | Area | Files | Lines |
 | --- | ---: | ---: |

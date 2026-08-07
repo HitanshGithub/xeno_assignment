@@ -38,7 +38,7 @@ never re-picked. A human always reviews the PR before merge.
 
    ```bash
    claude setup-token        # generates an OAuth token from your Pro/Max subscription
-   gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo HitanshGithub/xeno_assignment
+   gh secret set CLAUDE_CODE_OAUTH_TOKEN   # run from a clone; targets this repo
    # paste the token from the command above
    ```
 

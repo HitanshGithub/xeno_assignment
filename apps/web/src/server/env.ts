@@ -23,7 +23,17 @@ const schema = z.object({
   GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
 });
 
-export const env = schema.parse(process.env);
+/**
+ * Hosting dashboards (Vercel, Render) store a cleared variable as an empty
+ * string rather than removing it. Zod's `.default()` only fires on `undefined`,
+ * so a blank `CRM_BASE_URL` would fail `.url()` and throw here — taking every
+ * server route down with a 500. Treat blank as absent so the defaults apply.
+ */
+const present = Object.fromEntries(
+  Object.entries(process.env).filter(([, value]) => value !== undefined && value !== ''),
+);
+
+export const env = schema.parse(present);
 
 export type AiMode = 'anthropic' | 'gemini' | 'mock';
 

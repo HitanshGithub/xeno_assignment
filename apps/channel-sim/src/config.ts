@@ -10,17 +10,26 @@ function num(name: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+/**
+ * Like `??` but also falls back on an empty string — hosting dashboards store a
+ * cleared variable as `''`, which would otherwise slip through as a real value.
+ */
+function str(name: string, fallback: string): string {
+  const raw = process.env[name];
+  return raw === undefined || raw === '' ? fallback : raw;
+}
+
 export const config = {
   // Prefer CHANNEL_PORT; fall back to a platform-injected PORT (Render/Heroku).
   port: num('CHANNEL_PORT', num('PORT', 4000)),
 
   /** Bearer token the CRM must present on /v1/send. */
-  apiKey: process.env.CHANNEL_SERVICE_API_KEY ?? 'dev-send-key-change-me',
+  apiKey: str('CHANNEL_SERVICE_API_KEY', 'dev-send-key-change-me'),
   /** Secret used to HMAC-sign receipts so the CRM can trust them. */
-  callbackSecret: process.env.CHANNEL_CALLBACK_SECRET ?? 'dev-callback-secret-change-me',
+  callbackSecret: str('CHANNEL_CALLBACK_SECRET', 'dev-callback-secret-change-me'),
 
   /** Default CRM base, used only if a send omits an absolute callbackUrl. */
-  crmBaseUrl: process.env.CRM_BASE_URL ?? 'http://localhost:3000',
+  crmBaseUrl: str('CRM_BASE_URL', 'http://localhost:3000'),
 
   /**
    * Wall-clock compression. Real engagement plays out over minutes/hours; for a

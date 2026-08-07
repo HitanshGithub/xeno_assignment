@@ -145,7 +145,7 @@ Useful scripts: `npm run typecheck` · `npm run db:studio` · `npm run format`.
 A hosted setup runs on **Vercel** (web) + **Render** (channel) + **Neon**
 (Postgres) — all free tiers. Step-by-step, including the two-service wiring, is
 in **[`DEPLOY.md`](./DEPLOY.md)**. The repo ships [`render.yaml`](./render.yaml)
-and [`apps/web/vercel.json`](./apps/web/vercel.json) for it.
+and [`vercel.json`](./vercel.json) for it.
 
 ---
 

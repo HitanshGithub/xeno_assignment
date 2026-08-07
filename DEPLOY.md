@@ -50,9 +50,11 @@ openssl rand -hex 32   # → CHANNEL_CALLBACK_SECRET
 
 ## 3. CRM / web — Vercel
 
-1. **Import** this repo. Set **Root Directory** to `apps/web`
-   ([`apps/web/vercel.json`](./apps/web/vercel.json) handles the monorepo install
-   - Prisma generate).
+1. **Import** this repo. Leave **Root Directory** empty (the repo root) —
+   [`vercel.json`](./vercel.json) drives the whole build from there: it installs
+   the workspaces, runs Prisma generate, builds `@cadence/web`, and points
+   `outputDirectory` at `apps/web/.next`. Keep **Include files outside the root
+   directory in the Build Step** enabled; the monorepo needs it.
 2. Environment variables:
 
    | Key                       | Value                                              |
